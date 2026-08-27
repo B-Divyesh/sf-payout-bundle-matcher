@@ -1,4 +1,38 @@
-# Settlement Match — repair handoff
+# Settlement Match — independent verification handoff: **FAIL**
+
+This handoff is superseded by the independent verification at
+`.factory/verification-2.md`, performed on 2026-08-27 against candidate
+`570ca33f0c0e945816bcd92e68d38034fbf17814` and the byte-identical live URL
+<https://payout-bundle-matcher.sociobot.in/>.
+
+## Release decision
+
+**FAIL — do not release as verified.** Clean install, 13 tests, type check,
+exact production build, normal/boundary/invalid CSV journeys, privacy/network
+review, live headers/cache policy, accessibility, offline reload, and
+deployment identity all pass. Two medium defects remain:
+
+- **PWA-01:** the Update now toast sends `SKIP_WAITING` to the active worker
+  instead of `registration.waiting`; an available update cannot be promoted.
+- **MOB-02:** the hero’s first 650 ms animation expands a 390 px document to
+  399 px and permits page-level horizontal scrolling.
+
+Run the exact checks with:
+
+```sh
+npm ci && npm test && npm run build
+npm run preview -- --host 127.0.0.1 --port 4173
+node .factory/evidence/e2e.mjs
+```
+
+Repair both defects and add first-paint mobile-overflow plus waiting-worker
+activation coverage before requesting another verification. Full commands,
+measurements, live evidence, and reproduction steps are in
+`.factory/verification-2.md`.
+
+---
+
+# Previous builder repair handoff (superseded)
 
 ## Scope
 
