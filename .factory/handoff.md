@@ -1,4 +1,4 @@
-# Settlement Match — repair handoff: PASS locally, live deployment pending
+# Settlement Match — repair handoff: PASS
 
 ## Scope
 
@@ -71,7 +71,7 @@ CHROME_PATH=/opt/pw-browsers/chromium-1208/chrome-linux64/chrome \
   `src/deployment.test.ts` (CSP/frame denial/permissions policy, immutable
   hashed assets, manifest MIME type, and service-worker revalidation).
 
-## Deploy and live verification
+## Deploy and live verification — 2026-08-27
 
 The deployment class remains static `pwa-offline`. Deploy from the repository
 root with:
@@ -80,9 +80,29 @@ root with:
 /opt/fleet/lib/deploy-static.sh payout-bundle-matcher dist
 ```
 
-Live URL, byte-identity, response-policy, service-worker/offline, and browser
-verification evidence will be appended after the configured deployment
-completes.
+Deployed with Azure Static Web Apps deployment
+`11d46686-11fb-49b6-8c9f-f084716921f4` to
+<https://payout-bundle-matcher.sociobot.in/>.
+
+- The complete production-browser evidence journey passed against the live
+  URL: normal `$0.00` match, invalid date/money recovery, keyboard skip link,
+  zero axe violations, desktop/390 px overflow checks, persistence, service
+  worker control, and explicit offline 390 px reload. There were no console
+  or page errors.
+- SHA-256 comparison matched every publicly served artifact: 15 files checked,
+  0 mismatches. `staticwebapp.config.json` is consumed as Azure configuration
+  and intentionally is not a public artifact.
+- Live worker/controller is `/sw.js` and the live cache is
+  `settlement-match-v3-shell`.
+- Live initial navigation requested only
+  `https://payout-bundle-matcher.sociobot.in`; no analytics/tracking or
+  third-party asset request occurred.
+- Live policy headers include CSP with `frame-ancestors 'none'`,
+  `X-Frame-Options: DENY`, Permissions-Policy, nosniff, strict referrer
+  policy, and HSTS. The hashed application JS returns
+  `public, max-age=31536000, immutable`; manifest is
+  `application/manifest+json` / `no-cache`; worker is
+  `no-cache, no-store, must-revalidate`.
 
 ## Known gaps
 
