@@ -48,7 +48,10 @@ export function parseCsv(text: string, name = 'file.csv'): ImportedFile {
 }
 
 export function csvEscape(value: string | number): string {
-  const text = String(value)
+  const source = String(value)
+  // Keep untrusted values as text when this export is opened in spreadsheet
+  // software. The apostrophe is a spreadsheet-safe representation of source.
+  const text = /^[=+\-@]/.test(source) ? `'${source}` : source
   return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text
 }
 

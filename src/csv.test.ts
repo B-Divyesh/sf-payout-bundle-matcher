@@ -27,4 +27,9 @@ describe('CSV handling', () => {
     expect(rowsToCsv(['id', 'note'], [['A1', 'needs, review'], ['A2', 'said "ok"']]))
       .toBe('id,note\nA1,"needs, review"\nA2,"said ""ok"""')
   })
+
+  it('neutralizes spreadsheet formulas in exported source cells', () => {
+    expect(rowsToCsv(['reference'], [['=1+1'], ['+SUM(A1:A2)'], ['-42'], ['@lookup']]))
+      .toBe("reference\n'=1+1\n'+SUM(A1:A2)\n'-42\n'@lookup")
+  })
 })

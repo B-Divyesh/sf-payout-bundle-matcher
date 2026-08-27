@@ -1,4 +1,4 @@
-const VERSION = 'settlement-match-v1'
+const VERSION = 'settlement-match-v2'
 const SHELL = `${VERSION}-shell`
 const RUNTIME = `${VERSION}-runtime`
 const CORE = ['/', '/offline.html', '/manifest.webmanifest', '/settlement-landscape.webp', '/icons/icon.svg', '/icons/icon-192.png', '/icons/icon-512.png']

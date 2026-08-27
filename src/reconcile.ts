@@ -2,9 +2,21 @@ import type { CsvRow, Mapping, Payout, Reconciliation, Sale } from './types'
 
 export function parseMoney(raw: string): number {
   if (!raw?.trim()) return 0
-  const negative = /^\s*\(.*\)\s*$/.test(raw)
-  const cleaned = raw.replace(/[^0-9.,+-]/g, '').replaceAll(',', '').replace(/[()]/g, '')
-  const value = Number.parseFloat(cleaned)
+  let valueText = raw.trim()
+  let negative = false
+  if (valueText.startsWith('(') || valueText.endsWith(')')) {
+    if (!/^\([^()]+\)$/.test(valueText)) throw new Error(`“${raw}” is not a valid money amount.`)
+    negative = true
+    valueText = valueText.slice(1, -1).trim()
+  }
+
+  // A CSV may contain a currency symbol/code and thousands separators, but it
+  // must still be one complete decimal value. In particular, parseFloat would
+  // silently turn a damaged "12.34.56" into $12.34.
+  valueText = valueText.replace(/^(?:[A-Za-z]{3}|[$€£¥₹])\s*|\s*(?:[A-Za-z]{3}|[$€£¥₹])$/g, '').trim()
+  const match = valueText.match(/^(?<sign>[+-]?)(?:(?:\d{1,3}(?:,\d{3})+)|\d+)(?:\.\d{1,2})?$/)
+  if (!match || (negative && match.groups?.sign)) throw new Error(`“${raw}” is not a valid money amount.`)
+  const value = Number(match[0].replaceAll(',', ''))
   if (!Number.isFinite(value)) throw new Error(`“${raw}” is not a valid money amount.`)
   return Math.round((negative ? -value : value) * 100) / 100
 }
@@ -12,14 +24,33 @@ export function parseMoney(raw: string): number {
 export function parseDate(raw: string): string {
   const value = raw?.trim()
   if (!value) throw new Error('A mapped date is blank.')
-  const direct = new Date(value)
-  if (!Number.isNaN(direct.valueOf())) return direct.toISOString().slice(0, 10)
-  const match = value.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/)
-  if (match) {
-    const parsed = new Date(Date.UTC(Number(match[3]), Number(match[1]) - 1, Number(match[2])))
-    if (!Number.isNaN(parsed.valueOf())) return parsed.toISOString().slice(0, 10)
+  const iso = value.match(/^(\d{4})-(\d{2})-(\d{2})(.*)$/)
+  if (iso) {
+    const [, year, month, day, suffix] = iso
+    validateCalendarDate(year, month, day, raw)
+    if (!suffix) return `${year}-${month}-${day}`
+    if (/^T/.test(suffix)) {
+      const instant = new Date(value)
+      if (!Number.isNaN(instant.valueOf())) return instant.toISOString().slice(0, 10)
+    }
+  }
+  const us = value.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/)
+  if (us) {
+    const [, month, day, year] = us
+    validateCalendarDate(year, month, day, raw)
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
   }
   throw new Error(`“${raw}” is not a date this browser recognizes.`)
+}
+
+function validateCalendarDate(yearText: string, monthText: string, dayText: string, raw: string): void {
+  const year = Number(yearText)
+  const month = Number(monthText)
+  const day = Number(dayText)
+  const parsed = new Date(Date.UTC(year, month - 1, day))
+  if (parsed.getUTCFullYear() !== year || parsed.getUTCMonth() !== month - 1 || parsed.getUTCDate() !== day) {
+    throw new Error(`“${raw}” is not a real calendar date.`)
+  }
 }
 
 export function toPayout(row: CsvRow, index: number, mapping: Mapping['payout']): Payout {

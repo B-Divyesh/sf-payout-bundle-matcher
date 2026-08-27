@@ -14,9 +14,20 @@ describe('money and date normalization', () => {
     expect(() => parseMoney('not money')).toThrow('not a valid money')
   })
 
+  it('rejects malformed money instead of accepting a numeric prefix', () => {
+    expect(() => parseMoney('12.34.56')).toThrow('not a valid money')
+    expect(() => parseMoney('1,23.45')).toThrow('not a valid money')
+    expect(() => parseMoney('12.345')).toThrow('not a valid money')
+  })
+
   it('normalizes ISO and US export dates', () => {
     expect(parseDate('2026-08-26T14:30:00Z')).toBe('2026-08-26')
     expect(parseDate('08/25/2026')).toBe('2026-08-25')
+  })
+
+  it('rejects impossible calendar dates before matching', () => {
+    expect(() => parseDate('2026-02-30')).toThrow('not a real calendar date')
+    expect(() => parseDate('02/29/2025')).toThrow('not a real calendar date')
   })
 })
 

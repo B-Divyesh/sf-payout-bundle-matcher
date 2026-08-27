@@ -1,108 +1,116 @@
-# Settlement Match — verification handoff: **FAIL**
+# Settlement Match — repair handoff
 
-Independent verification on 2026-08-27 tested candidate
-`46e6d4a45e29547497c6b689b7c13d05c2d7f4c9` at
-<https://payout-bundle-matcher.sociobot.in/> from a clean checkout. The live
-site is byte-identical to that candidate build, so this is **not** a
-deployment-only failure. Do not release this candidate as accepted.
+## Scope
 
-The detailed evidence is in [`.factory/verification-1.md`](verification-1.md).
+This repair addresses every finding in independent verifier report
+`.factory/verification-1.md` (recorded by commit
+`56f111bf48929023bdd30495a8a6fcf980aa4321`) while retaining the existing
+local-first CSV reconciliation, persistence, import/export/deletion, paid
+license, PWA, legal routes, and original editorial visual system.
 
-Release-blocking defects:
+## Repaired
 
-- **High FIN-01:** `2026-02-30` is silently normalized to 2 March instead of
-  rejected, allowing a false `$0.00` reconciliation.
-- **High FIN-02:** malformed money such as `12.34.56` is silently parsed as
-  `$12.34`.
-- **High A11Y-01:** axe reports serious 2.16:1–2.96:1 contrast failures on
-  excluded transaction evidence.
+- **FIN-01:** Dates are now parsed only from supported ISO or US export forms,
+  with calendar fields validated before conversion. Impossible values such as
+  `2026-02-30` and `02/29/2025` produce a recoverable mapping error; JavaScript
+  can no longer normalize them into different evidence.
+- **FIN-02:** Money parsing now requires one complete conventional decimal
+  value after an optional currency symbol/code and valid thousands grouping.
+  `12.34.56`, bad grouping, and more than two decimal places are rejected
+  rather than truncated by `parseFloat`.
+- **A11Y-01:** Excluded rows retain full text opacity and use a readable warm
+  surface plus strike-through, preserving the evidence distinction without
+  lowering contrast.
+- **SEC-01:** CSV export prefixes source cells beginning `=`, `+`, `-`, or
+  `@` with a spreadsheet text apostrophe, preventing formula execution while
+  preserving the displayed source value.
+- **MOB-01:** The hero’s decorative disc now stays inside the figure’s right
+  edge, eliminating document-level overflow at 390 px. The intentionally wide
+  transaction table remains the only horizontal scroller.
+- **DEP-01 / DEP-02:** `public/staticwebapp.config.json` ships with the static
+  artifact. It makes `/assets/*` immutable for one year, gives the manifest
+  `application/manifest+json`, keeps the service worker revalidated, and adds
+  CSP, `frame-ancestors`, X-Frame-Options, Permissions-Policy, nosniff, and
+  strict referrer policy. The CSP permits only this origin, the inline data-URI
+  texture, blob downloads, and the optional Sociobot license verifier.
+- The service-worker cache namespace is now `settlement-match-v2`, so an
+  installed prior version gets a clean updated shell on activation.
 
-Also resolve CSV formula injection on report export, 390 px page-level
-horizontal overflow, and live immutable-cache/response-policy gaps before
-re-verification. The normal local-first workflow, local persistence,
-export/import/deletion, service-worker-controlled offline reload, and package
-tests/build did pass; exact commands and results are in the verification
-report below.
+## Regression coverage
 
-# Settlement Match — build handoff
+- Unit tests cover impossible calendar dates, malformed money formats,
+  spreadsheet formula neutralization, and the static-host cache/header/MIME
+  contract (`13` tests across `3` files).
+- `.factory/evidence/e2e.mjs` covers a normal signed reconciliation with an
+  excluded void row, desktop and 390 × 844 layouts, keyboard Tab/Enter on the
+  skip link, axe scans of empty and matched states, the exact FIN-01 and
+  FIN-02 input pairs, persistence, service-worker control, and offline reload.
 
-## Shipped
-
-- A complete local CSV reconciliation flow: import a processor payout export
-  and sales/invoice export, confirm every suggested mapping, choose a payout,
-  adjust the settlement lookback window, include/exclude rows, and see the
-  deterministic gross − fees − refunds = expected proceeds calculation.
-- Timing shifts are labeled per row; remaining variance is presented as an
-  exception rather than hidden. Both per-sale and payout-level fee/refund
-  exports are supported.
-- Reviewer sign-off with name, timestamp, report ID, required variance note,
-  browser print/PDF report, and exception CSV containing both included and
-  excluded transactions.
-- IndexedDB persistence, workspace JSON export/import, explicit local deletion,
-  offline state, install manifest/icons, versioned service-worker caches,
-  navigation fallback, and update-ready toast.
-- A genuinely useful free tier. The $19 one-time Pro license uses the Sociobot
-  hosted checkout/verify contract and adds reusable local column maps plus
-  unbranded print reports. License restore and once-daily verification are
-  implemented without blocking the free first paint.
-- Original surreal editorial hero art, optimized from 2.5 MB PNG source to a
-  52 KB WebP. Prompt, model/deployment, review, and license provenance are in
-  `.factory/design.md` and `assets/src/settlement-landscape*.json`.
-- Responsive 390 px layout, keyboard focus treatment, reduced-motion fallback,
-  semantic landmarks, one h1, labeled controls/table, live error/status copy,
-  legal pages, and no runtime third-party scripts, fonts, analytics, or bank
-  connections.
-
-## Superseded builder verification (not current acceptance evidence)
-
-The following is the builder's pre-independent-check record. It is retained
-for reproduction context only; the FAIL verdict and exact current evidence in
-`verification-1.md` take precedence.
+## Run and verify
 
 ```sh
-npm install
+npm ci
 npm test
 npm run build
-npm run preview
+npm run preview -- --host 127.0.0.1 --port 4173
+node .factory/evidence/e2e.mjs
 ```
 
-Deployment command: `npm run build`
+Current local production verification (2026-08-27):
 
-Deployment directory: `dist/` (`dist/index.html` is at the root).
+- `npm ci`: 58 packages audited, 0 vulnerabilities.
+- `npm test`: 3 files / 13 tests passed.
+- `npm run build`: passed (`tsc --noEmit && vite build`), producing `dist/`.
+  Initial application assets are 30.58 KB JS (10.51 KB gzip), 17.74 KB CSS
+  (5.11 KB gzip), and 52.23 KB WebP hero artwork.
+- Playwright browser evidence: `$0.00` normal variance with two selected rows;
+  invalid date and money each show an error and remain on the mapping form;
+  no 390 px or desktop document overflow; skip link reached by keyboard;
+  service worker controls the page; signed state survives refresh and offline
+  reload; no page/console errors; axe has zero violations in the empty and
+  representative excluded-row matched states.
+- Lighthouse mobile production-preview: Performance 100, Accessibility 100,
+  Best Practices 100, SEO 100; LCP 1.3 s, CLS 0, TBT 0 ms. The JSON evidence
+  is `.factory/evidence/lighthouse.json`.
+- Privacy check: no production runtime dependencies; initial app paths use
+  only first-party assets. Source review finds no analytics, upload endpoint,
+  third-party font, or tracking request. The optional user-initiated license
+  verification is the sole external call (`api.sociobot.in`).
+- Static response configuration is unit-tested and present in `dist/`. Live
+  response headers and asset identity are verified after deployment below.
 
-Verification on 2026-08-27 against the local production preview:
+## Deploy
 
-- `npm test`: 2 files, 9 tests passed.
-- `npm run build`: passed; initial assets are 29.90 KB JS / 10.20 KB gzip,
-  17.64 KB CSS / 5.10 KB gzip, and 52 KB hero WebP.
-- Factory `verify-url.sh`: HTTP 200, title/lang/main/alt checks passed, one h1,
-  zero missing image alts, zero unlabeled buttons, zero console/page errors.
-- Playwright 390 × 844 end-to-end: sample upload → confirmed mapping → two-row
-  match → $0.00 variance → sign-off → refresh persistence → offline refresh;
-  passed with no document-level horizontal overflow.
-- Playwright + axe-core: zero violations on the empty workspace and the signed
-  matched workspace (therefore zero serious/critical violations).
-- Lighthouse mobile: Performance 100, Accessibility 100, Best Practices 100,
-  SEO 100; LCP 1.4 s, CLS 0, total blocking time 10 ms. Lab Lighthouse does not
-  produce INP without field interaction data.
-- Privacy and terms static routes, manifest, app icons, robots file, sitemap,
-  and service-worker shell assets are present in `dist/`.
+Deployment class remains `pwa-offline` static hosting. Build from the repository
+root and deploy `dist/`:
 
-The reproducible browser journey is `.factory/evidence/e2e.mjs`; start the
-preview server first. It uses `CHROME_PATH` when supplied, otherwise the worker
-image's Playwright Chromium path.
+```sh
+npm ci && npm test && npm run build
+/opt/fleet/lib/deploy-static.sh payout-bundle-matcher dist
+```
 
-## Known gaps / next steps
+## Live deployment verification
 
-- The factory still needs to register the production product in Sociobot. The
-  checkout/verify URLs intentionally contain only the slug; a real paid card
-  journey could not be completed before that registration.
-- Matching is deliberately explainable: it suggests non-void sales from the
-  selected date window, then requires a person to approve rows. It does not
-  infer processor-specific payout IDs from undocumented metadata or solve
-  arbitrary subset sums.
-- v1 accepts comma-delimited CSV up to 10 MB. Locale-specific semicolon files
-  should be re-exported as standard CSV, and ambiguous dates should be exported
-  as ISO dates.
-- Print/PDF output uses the browser print dialog; browsers may add their own
-  page header/footer unless the user disables that print option.
+Deployed 2026-08-27 with Azure Static Web Apps deployment
+`a7f8a21e-477b-44e5-8717-3b6464f9c1e5` to
+`https://payout-bundle-matcher.sociobot.in/`.
+
+- The complete live browser regression, including the exact invalid-date and
+  invalid-money cases, passed with the same zero axe violations, no console
+  errors, service-worker control, and offline reload as local preview.
+- SHA-256 comparison matched all 15 public files in `dist/` against the live
+  deployment. Azure consumes `staticwebapp.config.json` as configuration and
+  intentionally does not serve it as a public file.
+- Live `/assets/app-BHChZpk2.js` returns
+  `Cache-Control: public, max-age=31536000, immutable`; the manifest returns
+  `Content-Type: application/manifest+json` and `Cache-Control: no-cache`; the
+  worker returns `Cache-Control: no-cache, no-store, must-revalidate`.
+- The live HTML includes the configured CSP (including `frame-ancestors
+  'none'`), `Permissions-Policy`, `X-Frame-Options: DENY`, nosniff, strict
+  referrer policy, and the host’s existing HSTS policy.
+
+## Known external dependency
+
+The optional $19 Pro checkout still depends on the factory registering the
+production Sociobot product. Free reconciliation, all user data export, and
+the privacy-preserving local workflow are fully usable without it.
