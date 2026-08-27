@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Settlement Match balance mark">
+  <rect width="512" height="512" rx="72" fill="#f3ebdd"/>
+  <path d="M90 298h332" stroke="#17242b" stroke-width="30" stroke-linecap="square" transform="rotate(-4 256 298)"/>
+  <path d="M228 292v126M284 292v126M172 418h168" fill="none" stroke="#17242b" stroke-width="28"/>
+  <circle cx="152" cy="187" r="86" fill="#d8563a" stroke="#17242b" stroke-width="12"/>
+  <path d="M332 155l102 20-18 112-102-18z" fill="#fff9ef" stroke="#17242b" stroke-width="12"/>
+  <path d="M332 155l14-28 95 20-7 28" fill="#c69726" stroke="#17242b" stroke-width="12"/>
+</svg>
