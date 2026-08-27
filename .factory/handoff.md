@@ -1,3 +1,29 @@
+# Settlement Match — verification handoff: **FAIL**
+
+Independent verification on 2026-08-27 tested candidate
+`46e6d4a45e29547497c6b689b7c13d05c2d7f4c9` at
+<https://payout-bundle-matcher.sociobot.in/> from a clean checkout. The live
+site is byte-identical to that candidate build, so this is **not** a
+deployment-only failure. Do not release this candidate as accepted.
+
+The detailed evidence is in [`.factory/verification-1.md`](verification-1.md).
+
+Release-blocking defects:
+
+- **High FIN-01:** `2026-02-30` is silently normalized to 2 March instead of
+  rejected, allowing a false `$0.00` reconciliation.
+- **High FIN-02:** malformed money such as `12.34.56` is silently parsed as
+  `$12.34`.
+- **High A11Y-01:** axe reports serious 2.16:1–2.96:1 contrast failures on
+  excluded transaction evidence.
+
+Also resolve CSV formula injection on report export, 390 px page-level
+horizontal overflow, and live immutable-cache/response-policy gaps before
+re-verification. The normal local-first workflow, local persistence,
+export/import/deletion, service-worker-controlled offline reload, and package
+tests/build did pass; exact commands and results are in the verification
+report below.
+
 # Settlement Match — build handoff
 
 ## Shipped
@@ -27,7 +53,11 @@
   legal pages, and no runtime third-party scripts, fonts, analytics, or bank
   connections.
 
-## Run and verify
+## Superseded builder verification (not current acceptance evidence)
+
+The following is the builder's pre-independent-check record. It is retained
+for reproduction context only; the FAIL verdict and exact current evidence in
+`verification-1.md` take precedence.
 
 ```sh
 npm install
