@@ -4,3 +4,6 @@ dist/
 *.log
 graphify-out/
 .DS_Store
+.factory/evidence/*.png
+.factory/evidence/*.json
+.factory/evidence/index.html

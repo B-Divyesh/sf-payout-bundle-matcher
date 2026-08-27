@@ -274,6 +274,7 @@ function renderMatch(): string {
           <div class="variance ${explained ? 'zero' : ''}"><dt>Unexplained variance</dt><dd>${money(result.variance)}</dd></div>
         </dl>
         <p class="timing-note"><span aria-hidden="true">↗</span><strong>${result.timingShiftCount} timing shift${result.timingShiftCount === 1 ? '' : 's'}</strong> ${result.timingShiftCount ? `came from dates before ${dateLabel(payout.date)}.` : 'All selected sales are from the payout date.'}</p>
+        <p class="print-credit">Prepared locally with Settlement Match · payout-bundle-matcher.sociobot.in</p>
       </section>
       <section class="signoff-panel" aria-labelledby="signoff-title">
         <p class="eyebrow">Review decision</p><h3 id="signoff-title">${state.signoff ? 'Report signed off' : 'Complete the trail'}</h3>
@@ -468,6 +469,7 @@ function exportReport(): void {
   const data = currentData(); if (!data) return
   const { result } = data
   const rows = result.selected.map((sale) => [sale.id, sale.date, sale.status, sale.gross.toFixed(2), sale.fee.toFixed(2), sale.refund.toFixed(2), 'Included'])
+  rows.push(...result.excluded.map((sale) => [sale.id, sale.date, sale.status, sale.gross.toFixed(2), sale.fee.toFixed(2), sale.refund.toFixed(2), 'Excluded']))
   rows.push(['SUMMARY', data.payout.date, state.signoff?.note ?? '', result.gross.toFixed(2), result.fees.toFixed(2), result.refunds.toFixed(2), `Variance ${result.variance.toFixed(2)}`])
   download(`${data.payout.id.replace(/[^a-z0-9-]/gi, '_')}-exception-report.csv`, rowsToCsv(['Reference', 'Date', 'Status / note', 'Gross', 'Fee', 'Refund', 'Decision'], rows), 'text/csv')
 }

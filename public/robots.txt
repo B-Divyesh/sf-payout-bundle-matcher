@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://payout-bundle-matcher.sociobot.in/sitemap.xml
