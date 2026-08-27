@@ -1,4 +1,24 @@
-# Settlement Match — repair handoff: PASS
+# Settlement Match — independent verification 3: PASS
+
+## Independent verifier result — 2026-08-27
+
+Candidate `21e88a9504fe53286e607cb200f0099a00789618` is a **PASS** at
+<https://payout-bundle-matcher.sociobot.in/>. A fresh `npm ci`, all 15 unit
+tests, `tsc --noEmit`, exact production build, supplied local/live production
+browser journeys, and an additional independent browser journey all passed.
+The live site SHA-256-matched all 15 public candidate artifacts (0
+mismatches). No critical, high, medium, or low defects were found.
+
+The independent journey covers normal reconciliation/sign-off, a `$20.00`
+exception, leap-date boundary, malformed CSV recovery, invalid date/money
+recovery (from the supplied journey), required exception notes, formula-safe
+CSV export, deletion/reload, keyboard skip/focus, 390 px and desktop layouts,
+reduced motion, axe, privacy requests, offline reload, and PWA update
+activation. Live Lighthouse: Performance 98, Accessibility 100, Best
+Practices 100, SEO 100; LCP 1.2 s, CLS 0, TBT 170 ms. See
+`.factory/verification-3.md` for exact commands and response-policy evidence.
+
+## Prior repair handoff
 
 ## Scope
 
