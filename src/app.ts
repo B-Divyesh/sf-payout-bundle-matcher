@@ -3,6 +3,7 @@ import { parseCsv, guessColumn, rowsToCsv } from './csv'
 import { clearState, loadState, saveState } from './db'
 import { captureLicense, checkoutUrl, hasOptimisticLicense, storeLicense, verifyLicense } from './license'
 import { reconcile, suggestedKeys, toPayout, toSales } from './reconcile'
+import { activateWaitingWorker } from './service-worker-update'
 import type { AppState, ImportedFile, Mapping, Payout, Reconciliation, Sale } from './types'
 
 const app = document.querySelector<HTMLDivElement>('#app')!
@@ -22,6 +23,7 @@ let busy = true
 let message = ''
 let error = ''
 let deleteArmed = false
+let serviceWorkerRegistration: ServiceWorkerRegistration | undefined
 
 captureLicense()
 licensed = hasOptimisticLicense()
@@ -432,7 +434,12 @@ async function action(name: string): Promise<void> {
     if (!deleteArmed) { deleteArmed = true; message = 'Press the delete button again to remove imported rows and the signed report.'; render(); return }
     await clearState(); state = emptyState(); deleteArmed = false; announce('All imported and saved reconciliation data was deleted from this device.'); render(); return
   }
-  if (name === 'update-app') { navigator.serviceWorker.controller?.postMessage({ type: 'SKIP_WAITING' }); location.reload(); return }
+  if (name === 'update-app') {
+    if (serviceWorkerRegistration && activateWaitingWorker(serviceWorkerRegistration, navigator.serviceWorker, () => location.reload())) return
+    announce('The update is no longer waiting. Check again in a moment.')
+    render()
+    return
+  }
 }
 
 async function importData(event: Event): Promise<void> {
@@ -484,6 +491,7 @@ window.addEventListener('offline', render)
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => void navigator.serviceWorker.register('/sw.js').then((registration) => {
+    serviceWorkerRegistration = registration
     if (registration.waiting) document.querySelector<HTMLElement>('#update-toast')!.hidden = false
     registration.addEventListener('updatefound', () => registration.installing?.addEventListener('statechange', () => {
       if (registration.waiting && navigator.serviceWorker.controller) document.querySelector<HTMLElement>('#update-toast')!.hidden = false

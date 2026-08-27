@@ -29,6 +29,7 @@ Then open the URL Vite prints. The production service worker is intentionally di
 npm test
 npm run build
 npm run preview
+npm run test:browser
 ```
 
 The exact deployment build command is `npm run build`. Static output lands in `dist/`, with `dist/index.html` at its root. Deploy that directory as a static site with clean-directory support for `/privacy/` and `/terms/`.

@@ -1,150 +1,91 @@
-# Settlement Match — independent verification handoff: **FAIL**
-
-This handoff is superseded by the independent verification at
-`.factory/verification-2.md`, performed on 2026-08-27 against candidate
-`570ca33f0c0e945816bcd92e68d38034fbf17814` and the byte-identical live URL
-<https://payout-bundle-matcher.sociobot.in/>.
-
-## Release decision
-
-**FAIL — do not release as verified.** Clean install, 13 tests, type check,
-exact production build, normal/boundary/invalid CSV journeys, privacy/network
-review, live headers/cache policy, accessibility, offline reload, and
-deployment identity all pass. Two medium defects remain:
-
-- **PWA-01:** the Update now toast sends `SKIP_WAITING` to the active worker
-  instead of `registration.waiting`; an available update cannot be promoted.
-- **MOB-02:** the hero’s first 650 ms animation expands a 390 px document to
-  399 px and permits page-level horizontal scrolling.
-
-Run the exact checks with:
-
-```sh
-npm ci && npm test && npm run build
-npm run preview -- --host 127.0.0.1 --port 4173
-node .factory/evidence/e2e.mjs
-```
-
-Repair both defects and add first-paint mobile-overflow plus waiting-worker
-activation coverage before requesting another verification. Full commands,
-measurements, live evidence, and reproduction steps are in
-`.factory/verification-2.md`.
-
----
-
-# Previous builder repair handoff (superseded)
+# Settlement Match — repair handoff: PASS locally, live deployment pending
 
 ## Scope
 
-This repair addresses every finding in independent verifier report
-`.factory/verification-1.md` (recorded by commit
-`56f111bf48929023bdd30495a8a6fcf980aa4321`) while retaining the existing
-local-first CSV reconciliation, persistence, import/export/deletion, paid
-license, PWA, legal routes, and original editorial visual system.
+This repair addresses both release blockers in the independent verifier report
+`.factory/verification-2.md` for candidate
+`570ca33f0c0e945816bcd92e68d38034fbf17814`. It preserves the researched
+local-first payout-reconciliation workflow, visual thesis, legal pages,
+privacy model, and static PWA deployment class.
 
 ## Repaired
 
-- **FIN-01:** Dates are now parsed only from supported ISO or US export forms,
-  with calendar fields validated before conversion. Impossible values such as
-  `2026-02-30` and `02/29/2025` produce a recoverable mapping error; JavaScript
-  can no longer normalize them into different evidence.
-- **FIN-02:** Money parsing now requires one complete conventional decimal
-  value after an optional currency symbol/code and valid thousands grouping.
-  `12.34.56`, bad grouping, and more than two decimal places are rejected
-  rather than truncated by `parseFloat`.
-- **A11Y-01:** Excluded rows retain full text opacity and use a readable warm
-  surface plus strike-through, preserving the evidence distinction without
-  lowering contrast.
-- **SEC-01:** CSV export prefixes source cells beginning `=`, `+`, `-`, or
-  `@` with a spreadsheet text apostrophe, preventing formula execution while
-  preserving the displayed source value.
-- **MOB-01:** The hero’s decorative disc now stays inside the figure’s right
-  edge, eliminating document-level overflow at 390 px. The intentionally wide
-  transaction table remains the only horizontal scroller.
-- **DEP-01 / DEP-02:** `public/staticwebapp.config.json` ships with the static
-  artifact. It makes `/assets/*` immutable for one year, gives the manifest
-  `application/manifest+json`, keeps the service worker revalidated, and adds
-  CSP, `frame-ancestors`, X-Frame-Options, Permissions-Policy, nosniff, and
-  strict referrer policy. The CSP permits only this origin, the inline data-URI
-  texture, blob downloads, and the optional Sociobot license verifier.
-- The service-worker cache namespace is now `settlement-match-v2`, so an
-  installed prior version gets a clean updated shell on activation.
+- **PWA-01 — waiting worker activation:** The Update now action now retains the
+  registration, sends `SKIP_WAITING` to `registration.waiting` (never the old
+  controller), and reloads only in response to `controllerchange`. The service
+  worker cache namespace is bumped to `settlement-match-v3` for this release.
+- **MOB-02 — initial mobile overflow:** At 700 px and below, the hero uses a
+  mobile entrance that fades/rotates into alignment without a rightward
+  translation. The desktop editorial entrance remains unchanged.
+- Playwright is pinned to `1.58.2`, matching the provided browser runtime.
 
 ## Regression coverage
 
-- Unit tests cover impossible calendar dates, malformed money formats,
-  spreadsheet formula neutralization, and the static-host cache/header/MIME
-  contract (`13` tests across `3` files).
-- `.factory/evidence/e2e.mjs` covers a normal signed reconciliation with an
-  excluded void row, desktop and 390 × 844 layouts, keyboard Tab/Enter on the
-  skip link, axe scans of empty and matched states, the exact FIN-01 and
-  FIN-02 input pairs, persistence, service-worker control, and offline reload.
+- `src/service-worker-update.test.ts` has direct unit coverage that the waiting
+  worker receives the message and reload cannot occur before `controllerchange`.
+- `.factory/evidence/pwa-update.mjs` performs a browser-level update: it serves
+  an installed worker, publishes a changed worker, clicks Update now, requires
+  navigation/controller replacement, and asserts the new shell cache exists.
+- `.factory/evidence/e2e.mjs` samples a fresh 390 × 844 page during the first
+  450 ms of the 650 ms entrance, as well as the settled 390 px and 1280 px
+  layouts. Document-level overflow is a failure; the transaction table remains
+  the deliberate local horizontal scroller.
 
-## Run and verify
+## Exact local verification — 2026-08-27
 
 ```sh
 npm ci
 npm test
 npm run build
 npm run preview -- --host 127.0.0.1 --port 4173
-node .factory/evidence/e2e.mjs
+npm run test:browser
+CHROME_PATH=/opt/pw-browsers/chromium-1208/chrome-linux64/chrome \
+  npx --yes lighthouse@12.8.2 http://127.0.0.1:4173/ \
+  --chrome-flags='--headless --no-sandbox --disable-dev-shm-usage' \
+  --only-categories=performance,accessibility,best-practices,seo \
+  --output=json --output-path=.factory/evidence/lighthouse.json --quiet
 ```
 
-Current local production verification (2026-08-27):
+- Clean install: `npm ci` succeeded; 58 packages audited, 0 vulnerabilities.
+- Unit/type/build: 4 files / 15 tests pass; `tsc --noEmit && vite build`
+  succeeds and emits `dist/index.html`.
+- Production assets: JS 30,769 B (10,590 B gzip), CSS 17,862 B (5,130 B
+  gzip), and the original WebP artwork 52,226 B — within the PWA budgets.
+- Browser journey: representative payout/sign-off has `$0.00` variance and
+  two selected rows; impossible dates and malformed money remain recoverable
+  mapping errors; signed data survives refresh; 390 px offline reload works;
+  no console/page errors occurred.
+- Browser accessibility and input: keyboard Tab/Enter reaches/operates the
+  skip link; axe has zero violations on empty and matched states; reduced-motion
+  policy remains active; first-paint 390 px samples are `[false,false,false,false]`
+  for document overflow, and desktop/settled mobile overflow are both false.
+- PWA update: the isolated production browser test reports
+  `{"updateActivated":true,"cache":"settlement-match-update-b-shell"}`.
+- Lighthouse mobile preview: Performance 99, Accessibility 100, Best Practices
+  100, SEO 100; LCP 1.4 s, CLS 0, TBT 120 ms. JSON evidence is
+  `.factory/evidence/lighthouse.json`.
+- Privacy and response policy: source/network review finds no analytics,
+  upload endpoint, bank connection, third-party script, or remote font. The
+  only external endpoint is the user-initiated Sociobot license verifier,
+  explicitly allow-listed by CSP. Static-host policy is covered by
+  `src/deployment.test.ts` (CSP/frame denial/permissions policy, immutable
+  hashed assets, manifest MIME type, and service-worker revalidation).
 
-- `npm ci`: 58 packages audited, 0 vulnerabilities.
-- `npm test`: 3 files / 13 tests passed.
-- `npm run build`: passed (`tsc --noEmit && vite build`), producing `dist/`.
-  Initial application assets are 30.58 KB JS (10.51 KB gzip), 17.74 KB CSS
-  (5.11 KB gzip), and 52.23 KB WebP hero artwork.
-- Playwright browser evidence: `$0.00` normal variance with two selected rows;
-  invalid date and money each show an error and remain on the mapping form;
-  no 390 px or desktop document overflow; skip link reached by keyboard;
-  service worker controls the page; signed state survives refresh and offline
-  reload; no page/console errors; axe has zero violations in the empty and
-  representative excluded-row matched states.
-- Lighthouse mobile production-preview: Performance 100, Accessibility 100,
-  Best Practices 100, SEO 100; LCP 1.3 s, CLS 0, TBT 0 ms. The JSON evidence
-  is `.factory/evidence/lighthouse.json`.
-- Privacy check: no production runtime dependencies; initial app paths use
-  only first-party assets. Source review finds no analytics, upload endpoint,
-  third-party font, or tracking request. The optional user-initiated license
-  verification is the sole external call (`api.sociobot.in`).
-- Static response configuration is unit-tested and present in `dist/`. Live
-  response headers and asset identity are verified after deployment below.
+## Deploy and live verification
 
-## Deploy
-
-Deployment class remains `pwa-offline` static hosting. Build from the repository
-root and deploy `dist/`:
+The deployment class remains static `pwa-offline`. Deploy from the repository
+root with:
 
 ```sh
-npm ci && npm test && npm run build
 /opt/fleet/lib/deploy-static.sh payout-bundle-matcher dist
 ```
 
-## Live deployment verification
+Live URL, byte-identity, response-policy, service-worker/offline, and browser
+verification evidence will be appended after the configured deployment
+completes.
 
-Deployed 2026-08-27 with Azure Static Web Apps deployment
-`a7f8a21e-477b-44e5-8717-3b6464f9c1e5` to
-`https://payout-bundle-matcher.sociobot.in/`.
+## Known gaps
 
-- The complete live browser regression, including the exact invalid-date and
-  invalid-money cases, passed with the same zero axe violations, no console
-  errors, service-worker control, and offline reload as local preview.
-- SHA-256 comparison matched all 15 public files in `dist/` against the live
-  deployment. Azure consumes `staticwebapp.config.json` as configuration and
-  intentionally does not serve it as a public file.
-- Live `/assets/app-BHChZpk2.js` returns
-  `Cache-Control: public, max-age=31536000, immutable`; the manifest returns
-  `Content-Type: application/manifest+json` and `Cache-Control: no-cache`; the
-  worker returns `Cache-Control: no-cache, no-store, must-revalidate`.
-- The live HTML includes the configured CSP (including `frame-ancestors
-  'none'`), `Permissions-Policy`, `X-Frame-Options: DENY`, nosniff, strict
-  referrer policy, and the host’s existing HSTS policy.
-
-## Known external dependency
-
-The optional $19 Pro checkout still depends on the factory registering the
-production Sociobot product. Free reconciliation, all user data export, and
-the privacy-preserving local workflow are fully usable without it.
+None in the repaired free/local-first workflow. The optional $19 Pro checkout
+still depends on the factory’s registered Sociobot product; it does not gate
+matching, data export, deletion, or accessibility.

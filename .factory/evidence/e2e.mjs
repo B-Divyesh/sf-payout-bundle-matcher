@@ -3,6 +3,16 @@ import AxeBuilder from '@axe-core/playwright'
 
 const baseUrl = process.env.BASE_URL || 'http://127.0.0.1:4173'
 const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || '/opt/pw-browsers/chromium_headless_shell-1208/chrome-headless-shell-linux64/chrome-headless-shell' })
+const firstPaintContext = await browser.newContext({ viewport: { width: 390, height: 844 } })
+const firstPaintPage = await firstPaintContext.newPage()
+await firstPaintPage.goto(baseUrl, { waitUntil: 'domcontentloaded' })
+const firstPaintSamples = []
+for (const delay of [0, 100, 150, 200]) {
+  if (delay) await firstPaintPage.waitForTimeout(delay)
+  firstPaintSamples.push(await firstPaintPage.evaluate(() => document.documentElement.scrollWidth > window.innerWidth || document.body.scrollWidth > window.innerWidth))
+}
+const firstPaintOverflow = firstPaintSamples.some(Boolean)
+await firstPaintContext.close()
 const context = await browser.newContext({ viewport: { width: 390, height: 844 } })
 const page = await context.newPage()
 const errors = []
@@ -80,5 +90,5 @@ await desktopContext.close()
 await browser.close()
 
 const seriousAxeViolations = [...welcomeAxe.violations, ...matchedAxe.violations].filter((violation) => ['serious', 'critical'].includes(violation.impact || ''))
-console.log(JSON.stringify({ variance, selected, skipLinkReached, signedStateSurvivedReload: true, controlledByServiceWorker, offlineReload: offlineNotice, hasHorizontalOverflow, desktopOverflow, overflowElements, invalidDate, invalidMoney, axeViolations: { welcome: welcomeAxe.violations.length, matched: matchedAxe.violations.length, seriousOrCritical: seriousAxeViolations.map((item) => ({ id: item.id, nodes: item.nodes.map((node) => node.target) })) }, errors }))
-if (variance !== '$0.00' || selected !== 2 || !skipLinkReached || !controlledByServiceWorker || !offlineNotice || hasHorizontalOverflow || desktopOverflow || !invalidDate.stillMapping || !invalidMoney.stillMapping || !invalidDate.visibleError.includes('not a real calendar date') || !invalidMoney.visibleError.includes('not a valid money amount') || seriousAxeViolations.length || errors.length) process.exit(1)
+console.log(JSON.stringify({ variance, selected, skipLinkReached, signedStateSurvivedReload: true, controlledByServiceWorker, offlineReload: offlineNotice, firstPaintSamples, firstPaintOverflow, hasHorizontalOverflow, desktopOverflow, overflowElements, invalidDate, invalidMoney, axeViolations: { welcome: welcomeAxe.violations.length, matched: matchedAxe.violations.length, seriousOrCritical: seriousAxeViolations.map((item) => ({ id: item.id, nodes: item.nodes.map((node) => node.target) })) }, errors }))
+if (variance !== '$0.00' || selected !== 2 || !skipLinkReached || !controlledByServiceWorker || !offlineNotice || firstPaintOverflow || hasHorizontalOverflow || desktopOverflow || !invalidDate.stillMapping || !invalidMoney.stillMapping || !invalidDate.visibleError.includes('not a real calendar date') || !invalidMoney.visibleError.includes('not a valid money amount') || seriousAxeViolations.length || errors.length) process.exit(1)
