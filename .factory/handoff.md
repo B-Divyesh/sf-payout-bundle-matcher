@@ -1,5 +1,23 @@
 # Settlement Match repair 3 handoff
 
+## Independent verification 4
+
+**PASS — 0 findings and 0 untested claims.** On 2026-09-06, an independent
+clean-install verification reviewed implementation
+`0ab5a2b54a4c67283e61a549a22e088968555f16` and documentation
+`74f62ad1f93529247c08025026a996db9eafcbd1`. `npm test` passed (15 unit + 24
+browser tests), all 18 declared claim commands passed individually, and the
+full live suite passed 24/24. Fresh desktop/phone inspection, demo/reset/real
+workspace isolation, privacy, normal/invalid/boundary/recovery paths, offline
+and update behavior, routes/legal/404, accessibility, and prior finding
+regressions passed. Live mobile Lighthouse was 100 in all four categories.
+
+The detailed report is `.factory/verification-4.md`, copied to
+`/work/.evidence/qa-report.md`; machine result is
+`/work/.evidence/qa-result.json`. No product code changed during verification.
+The external billing-registration dependency remains accurately disclosed and
+does not expose a broken checkout.
+
 ## Current result
 
 The repair is deployed and all applicable local and live checks pass. The
