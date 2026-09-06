@@ -1,5 +1,25 @@
 # Settlement Match repair 3 handoff
 
+## Review 2
+
+**PASS — 0 findings and 0 untested claims.** Review 2 on 2026-09-06 used a
+clean `npm ci` installation and reviewed implementation
+`0ab5a2b54a4c67283e61a549a22e088968555f16` against documentation checkout
+`dd5d9fe7bdbd15a68938057428cda10018add921`. Local and live `npm test` passed
+(15 unit and 24 browser tests), every one of 18 declared claim commands passed
+individually, and the independent live journey passed. Fresh phone and desktop
+visits showed the job, audience, and sample action before scrolling; demo,
+reset, real-data isolation, offline/update, accessibility, privacy, route,
+legal, 404, invalid, boundary, and recovery checks passed. Mobile Lighthouse
+was 100 for Performance, Accessibility, Best Practices, and SEO.
+
+The full report is `.factory/review-2.md`, copied to
+`/work/.evidence/qa-report.md`. Machine result is
+`/work/.evidence/qa-result.json`; detailed run artifacts are under
+`/work/.evidence/review-2/`. No product code changed in this review. The
+checkout-registration dependency remains accurately disclosed and has no
+broken purchase action.
+
 ## Independent verification 4
 
 **PASS — 0 findings and 0 untested claims.** On 2026-09-06, an independent
