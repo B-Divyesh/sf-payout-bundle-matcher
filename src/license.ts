@@ -5,10 +5,6 @@ const VERDICT_KEY = `${KEY}:verdict`
 
 type Verdict = { valid: boolean; checkedAt: number }
 
-export function checkoutUrl(): string {
-  return `${API}/products/${PRODUCT_SLUG}/checkout`
-}
-
 export function captureLicense(): void {
   const url = new URL(location.href)
   const token = url.searchParams.get('license')

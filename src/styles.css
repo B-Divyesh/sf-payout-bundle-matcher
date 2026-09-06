@@ -6,4 +6,22 @@
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 
 /* Excluded evidence must remain readable, and decoration must not widen mobile pages. */
-.hero-art:before{right:0}tbody tr.excluded{opacity:1;background:#f0e7d8;text-decoration:line-through}@keyframes arrive-mobile{from{opacity:0;transform:rotate(1deg)}to{opacity:1;transform:none}}
+.hero-art:before{right:0}tbody tr.excluded{opacity:1;background:#f0e7d8;text-decoration:line-through}.row-check{width:44px;height:44px;min-height:44px}@keyframes arrive-mobile{from{transform:scale(.98) rotate(1deg)}to{transform:none}}
+
+/* Repair 3: plain first screen, isolated demo, visible data controls, and paid-offer status. */
+.hero-actions{display:grid;grid-template-columns:max-content max-content;gap:10px 22px;justify-content:start}
+.secondary-link{min-height:46px;display:inline-flex;align-items:center;font-weight:800}
+.action-note{grid-column:1/-1;color:var(--muted);font-size:.82rem}
+.hero-facts{list-style:none;padding:18px 0 0;margin:20px 0 0;border-top:1px solid var(--rule);display:grid;gap:7px;color:var(--muted);font-size:.88rem}
+.hero-facts li:before{content:"✓";color:var(--sage);font-weight:900;margin-right:9px}
+.demo-banner{position:sticky;top:0;z-index:30;min-height:56px;background:#f7df9f;color:#332706;border-block:1px solid #9a7317;padding:8px max(18px,calc((100vw - 1180px)/2));display:flex;align-items:center;gap:18px;box-shadow:0 4px 14px rgba(23,36,43,.12)}
+.demo-banner span{font-size:.82rem}.demo-banner div{display:flex;gap:8px;margin-left:auto}.demo-banner button,.demo-banner a{min-height:44px;border:1px solid #332706;background:var(--paper-high);color:#332706;padding:9px 13px;display:inline-flex;align-items:center;font-weight:800;text-decoration:none;cursor:pointer}
+.demo-intro{max-width:1180px;margin:auto;padding:54px 32px 34px}.demo-intro h1{font:400 clamp(2.7rem,6vw,4.6rem)/.96 Georgia,Cambria,"Times New Roman",serif;letter-spacing:-.045em;margin:0 0 18px}.demo-intro p:last-child{font-size:1.08rem;color:var(--muted);max-width:60ch}
+.workspace-heading-tools{display:grid;justify-items:end;gap:14px}.workspace-actions{display:flex;gap:18px}.workspace-actions .text-button{color:#c7d5ff;min-height:44px;padding:8px}
+.scope,.pricing{max-width:1180px;margin:auto;padding:72px 32px;border-top:1px solid var(--rule)}
+.scope h2,.pricing h2{font:400 clamp(2.1rem,4vw,3.3rem)/1.04 Georgia,serif;letter-spacing:-.035em;margin:0 0 20px}.scope p{max-width:68ch;color:var(--muted);font-size:1.05rem}
+.pricing{display:grid;grid-template-columns:1.4fr .7fr;gap:64px;align-items:start}.pricing>div>p{color:var(--muted);max-width:56ch}.price-block{border-left:4px solid var(--coral);padding:4px 0 4px 22px}.price-block>strong{font:400 2.4rem/1 Georgia,serif}.price-block p{color:var(--clay);font-weight:700}
+.offer-unavailable{background:#f6e8bd;border-left:4px solid #9a7317;padding:13px 15px;margin:20px 0}.offer-unavailable p{margin:4px 0 0;font-size:.86rem}.site-footer a,.site-footer .footer-button{min-height:44px;display:inline-flex;align-items:center;padding:10px}.site-footer .footer-button{min-width:44px}.upload-actions>a{color:#c2d2ff;min-height:44px;display:inline-flex;align-items:center;font-weight:750}
+@media (max-width:700px){.hero-actions{grid-template-columns:1fr}.action-note{grid-column:1}.hero-actions .button,.secondary-link{width:100%;justify-content:center}.hero-facts{margin-top:14px}.demo-banner{position:relative;align-items:flex-start;flex-wrap:wrap}.demo-banner span{width:100%}.demo-banner div{margin-left:0;width:100%}.demo-banner button,.demo-banner a{flex:1;justify-content:center}.demo-intro{padding:38px 18px 26px}.workspace-heading-tools{justify-items:start;width:100%}.workspace-actions{flex-wrap:wrap}.pricing{grid-template-columns:1fr;gap:28px}.scope,.pricing{padding:56px 18px}.site-footer div{gap:8px}}
+@media print{.demo-banner,.demo-intro,.scope,.pricing{display:none!important}}
+.wordmark{min-height:44px}

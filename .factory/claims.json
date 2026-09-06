@@ -1,0 +1,128 @@
+[
+  {
+    "id": "demo-isolation",
+    "claim": "The sample demo does not read or change the saved real workspace.",
+    "where": "demo banner, README",
+    "test": "npm run test:claims -- --grep @claim:demo-isolation",
+    "sandbox": "fresh browser context; create a named real workspace; enter, change, and reset /demo; return to the unchanged real workspace"
+  },
+  {
+    "id": "payout-reconciliation",
+    "claim": "Reconciles one payout from sales, fees, refunds, timing shifts, and variance.",
+    "where": "home, demo, README",
+    "test": "npm run test:claims -- --grep @claim:payout-reconciliation",
+    "sandbox": "fresh /demo; assert the sample gross, fees, refund, timing shift, payout, and zero variance"
+  },
+  {
+    "id": "settlement-window",
+    "claim": "Suggests transactions from a configurable settlement window.",
+    "where": "matcher, README",
+    "test": "npm run test:claims -- --grep @claim:settlement-window",
+    "sandbox": "fresh /demo; change lookback from three days to same day and assert selection and variance change"
+  },
+  {
+    "id": "mapping-confirmation",
+    "claim": "No mapped amount enters the calculation until the mapping is approved.",
+    "where": "How payout matching works, mapping form",
+    "test": "npm run test:claims -- --grep @claim:mapping-confirmation",
+    "sandbox": "fresh real workspace; import files; attempt unapproved mapping; approve and assert the calculated result"
+  },
+  {
+    "id": "signoff-persistence",
+    "claim": "A reviewer can sign off a report and retain it after reload.",
+    "where": "matcher, README",
+    "test": "npm run test:claims -- --grep @claim:signoff-persistence",
+    "sandbox": "fresh real workspace; match, sign, reload, and assert reviewer and signed state"
+  },
+  {
+    "id": "exception-csv",
+    "claim": "Exports an exception CSV with included, excluded, and summary rows.",
+    "where": "signed report, README",
+    "test": "npm run test:claims -- --grep @claim:exception-csv",
+    "sandbox": "fresh /demo; sign off, download CSV, and inspect representative included, excluded, and summary data"
+  },
+  {
+    "id": "print-report",
+    "claim": "Opens a signed report for browser printing or PDF saving.",
+    "where": "signed report, README",
+    "test": "npm run test:claims -- --grep @claim:print-report",
+    "sandbox": "fresh /demo; sign off, activate Print / save PDF, and observe invocation of the browser print path"
+  },
+  {
+    "id": "workspace-portability",
+    "claim": "Exports and imports the complete local workspace.",
+    "where": "workspace controls, README, privacy",
+    "test": "npm run test:claims -- --grep @claim:workspace-portability",
+    "sandbox": "fresh real workspace; sign, export, delete, import the downloaded file, and assert signed result restoration"
+  },
+  {
+    "id": "delete-data",
+    "claim": "Deletes imported and saved reconciliation data after confirmation.",
+    "where": "footer, privacy",
+    "test": "npm run test:claims -- --grep @claim:delete-data",
+    "sandbox": "fresh real workspace; import, match, confirm deletion, reload, and assert an empty workspace"
+  },
+  {
+    "id": "csv-size-limit",
+    "claim": "Rejects each CSV above 10 MiB and accepts a valid replacement.",
+    "where": "README, file error",
+    "test": "npm run test:claims -- --grep @claim:csv-size-limit",
+    "sandbox": "fresh real workspace; supply a 10 MiB plus one byte file, assert error, then supply a valid file"
+  },
+  {
+    "id": "local-processing",
+    "claim": "CSV matching uses no upload server, bank connection, analytics, advertising tracker, or automatic ledger posting.",
+    "where": "home, privacy, README",
+    "test": "npm run test:claims -- --grep @claim:local-processing",
+    "sandbox": "fresh /demo; record every request while matching, signing, and exporting; assert no request leaves the product origin"
+  },
+  {
+    "id": "workspace-persistence",
+    "claim": "Real workspace data persists in this browser's IndexedDB database.",
+    "where": "privacy, README",
+    "test": "npm run test:claims -- --grep @claim:workspace-persistence",
+    "sandbox": "fresh real workspace; import and match, reload, assert the result and named IndexedDB database"
+  },
+  {
+    "id": "license-local-storage",
+    "claim": "A returned Pro license is stored only in local browser storage and removed from the address.",
+    "where": "privacy, README",
+    "test": "npm run test:claims -- --grep @claim:license-local-storage",
+    "sandbox": "fresh browser; stub a valid Sociobot response; open a return URL and assert cleaned URL and namespaced local storage"
+  },
+  {
+    "id": "offline-workflow",
+    "claim": "The sample matcher reloads and remains usable offline after the first visit.",
+    "where": "first-screen fact, README",
+    "test": "npm run test:claims -- --grep @claim:offline-workflow",
+    "sandbox": "dedicated fresh browser context; visit /demo, obtain service-worker control, set offline, reload, and change the match"
+  },
+  {
+    "id": "free-core",
+    "claim": "Matching, sign-off, accessibility, and report export remain available without Pro.",
+    "where": "limits section, Pro dialog, README",
+    "test": "npm run test:claims -- --grep @claim:free-core",
+    "sandbox": "fresh /demo with no license; assert match, sign-off, print control, and CSV download"
+  },
+  {
+    "id": "pro-status",
+    "claim": "Pro is a $19 one-time license, and checkout is currently unavailable pending registration.",
+    "where": "pricing, Pro dialog, terms",
+    "test": "npm run test:claims -- --grep @claim:pro-status",
+    "sandbox": "fresh home page; assert exact price, unavailable status, and absence of a broken checkout action"
+  },
+  {
+    "id": "pro-features",
+    "claim": "A verified Pro license saves reusable column mappings and removes the print credit.",
+    "where": "pricing, Pro dialog, terms",
+    "test": "npm run test:claims -- --grep @claim:pro-features",
+    "sandbox": "fresh browser with stubbed valid Sociobot verification; save a map and assert the print credit is hidden"
+  },
+  {
+    "id": "billing-api-only",
+    "claim": "Optional license verification contacts only the Sociobot billing API.",
+    "where": "Pro dialog, privacy, README",
+    "test": "npm run test:claims -- --grep @claim:billing-api-only",
+    "sandbox": "fresh browser; explicitly restore a fake token, record requests, and assert the sole external request is the product verify path"
+  }
+]

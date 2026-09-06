@@ -1,1 +1,38 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/legal.css"><title>Privacy — Settlement Match</title></head><body><header><a href="/">← Settlement Match</a></header><main><p>Policy · 27 August 2026</p><h1>Privacy, in plain terms.</h1><p>Settlement Match is designed so your customer and financial CSV data does not need to leave your device.</p><h2>What stays local</h2><p>Imported CSV rows, column mappings, transaction selections, reviewer notes, and signed reports are processed in your browser and stored in its IndexedDB database. A Pro license token and reusable column map are stored in localStorage. We do not receive this data.</p><h2>What reaches the network</h2><p>The application files are served by Sociobot. If you restore or use a Pro license, your license token is sent to the Sociobot billing API only to verify it. Checkout is hosted by Sociobot/Dodo, the merchant of record, under their checkout privacy terms. There are no analytics, advertising trackers, third-party fonts, or bank connections.</p><h2>Your controls</h2><p>Use “Export data” to download the current local workspace. Use “Delete local data” to remove imported rows and reports. You can also clear this site’s browser storage. Clearing storage cannot be undone, so export first if you need a record.</p><h2>Contact</h2><p>For product privacy questions, contact <a href="mailto:privacy@sociobot.in">privacy@sociobot.in</a>.</p></main><footer>Settlement Match · Local reconciliation utility · <a href="/terms/">Terms</a></footer></body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#f3ebdd" />
+    <meta name="description" content="How Settlement Match keeps CSV, reconciliation, and license data private." />
+    <link rel="canonical" href="https://payout-bundle-matcher.sociobot.in/privacy/" />
+    <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="/legal.css" />
+    <title>Privacy — Settlement Match</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to privacy policy</a>
+    <header class="legal-header">
+      <a class="wordmark" href="/">Settlement Match</a>
+      <nav aria-label="Main navigation"><a href="/demo">Demo</a><a href="/">Matcher</a><a aria-current="page" href="/privacy/">Privacy</a></nav>
+    </header>
+    <main id="main">
+      <p class="eyebrow">Policy · 6 September 2026</p>
+      <h1>How your data stays private</h1>
+      <p>Settlement Match processes customer and financial CSV data in your browser.</p>
+      <h2>Data stored on this device</h2>
+      <p>Imported rows, mappings, selections, reviewer notes, and signed reports are stored in this browser’s IndexedDB database.</p>
+      <p>A Pro license token and reusable column mapping are stored in localStorage. We do not receive your workspace data.</p>
+      <h2>Network requests</h2>
+      <p>Sociobot serves the application files. Restoring a Pro license sends that token only to the Sociobot billing API.</p>
+      <p>There are no analytics, advertising trackers, third-party fonts, bank connections, or CSV upload servers.</p>
+      <h2>Delete or copy your data</h2>
+      <p>Use “Export workspace” to download a copy. Use “Delete local data” twice to remove imported rows and signed reports.</p>
+      <p>You can also clear this site’s browser storage. Export first if you need a record.</p>
+      <h2>Privacy requests</h2>
+      <p>Email <a href="mailto:privacy@sociobot.in">privacy@sociobot.in</a> with a product privacy question.</p>
+    </main>
+    <footer class="legal-footer"><p>Explain one processor payout from local CSV files.</p><nav aria-label="Footer"><a href="/demo">Demo</a><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a></nav><p>Built by Param Factory · Version 1.1.0</p></footer>
+  </body>
+</html>

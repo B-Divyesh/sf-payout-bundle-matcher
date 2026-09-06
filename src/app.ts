@@ -1,12 +1,15 @@
 import './styles.css'
 import { parseCsv, guessColumn, rowsToCsv } from './csv'
 import { clearState, loadState, saveState } from './db'
-import { captureLicense, checkoutUrl, hasOptimisticLicense, storeLicense, verifyLicense } from './license'
+import { captureLicense, hasOptimisticLicense, storeLicense, verifyLicense } from './license'
 import { reconcile, suggestedKeys, toPayout, toSales } from './reconcile'
 import { activateWaitingWorker } from './service-worker-update'
 import type { AppState, ImportedFile, Mapping, Payout, Reconciliation, Sale } from './types'
 
 const app = document.querySelector<HTMLDivElement>('#app')!
+const url = new URL(location.href)
+const demoMode = url.pathname.replace(/\/$/, '') === '/demo' || url.searchParams.get('demo') === '1'
+const BUILD_LABEL = '1.1.0'
 const emptyState = (): AppState => ({
   version: 1,
   stage: 'welcome',
@@ -17,6 +20,35 @@ const emptyState = (): AppState => ({
   updatedAt: new Date().toISOString()
 })
 
+const demoState = (): AppState => ({
+  version: 1,
+  stage: 'match',
+  payoutFile: {
+    name: 'sample-payout.csv',
+    headers: ['payout_id', 'payout_date', 'net_amount', 'fees', 'refunds'],
+    rows: [{ payout_id: 'PO-1042', payout_date: '2026-08-26', net_amount: '285.50', fees: '9.50', refunds: '25.00' }]
+  },
+  salesFile: {
+    name: 'sample-sales.csv',
+    headers: ['order_id', 'paid_date', 'gross_amount', 'processor_fee', 'refund_amount', 'status'],
+    rows: [
+      { order_id: 'ORD-8831', paid_date: '2026-08-25', gross_amount: '120.00', processor_fee: '3.60', refund_amount: '0', status: 'paid' },
+      { order_id: 'ORD-8846', paid_date: '2026-08-26', gross_amount: '200.00', processor_fee: '5.90', refund_amount: '25.00', status: 'partially refunded' },
+      { order_id: 'ORD-8798', paid_date: '2026-08-20', gross_amount: '74.00', processor_fee: '2.22', refund_amount: '0', status: 'paid' },
+      { order_id: 'ORD-8849', paid_date: '2026-08-26', gross_amount: '48.00', processor_fee: '1.44', refund_amount: '0', status: 'void' }
+    ]
+  },
+  mapping: {
+    payout: { id: 'payout_id', date: 'payout_date', amount: 'net_amount', gross: '', fee: 'fees', refund: 'refunds' },
+    sales: { id: 'order_id', date: 'paid_date', gross: 'gross_amount', fee: 'processor_fee', refund: 'refund_amount', status: 'status' }
+  },
+  payoutRow: 0,
+  selectedKeys: ['sale-0', 'sale-1'],
+  timingDays: 3,
+  currency: 'USD',
+  updatedAt: '2026-08-26T17:30:00.000Z'
+})
+
 let state: AppState = emptyState()
 let licensed = false
 let busy = true
@@ -25,25 +57,46 @@ let error = ''
 let deleteArmed = false
 let serviceWorkerRegistration: ServiceWorkerRegistration | undefined
 
-captureLicense()
-licensed = hasOptimisticLicense()
-render()
-
-void loadState().then((saved) => {
-  if (saved?.version === 1) state = saved
-}).catch(() => {
-  message = 'Local saving is unavailable in this browser. You can still match and export this session.'
-}).finally(() => {
+setRouteMetadata()
+if (demoMode) {
+  state = demoState()
   busy = false
   render()
-})
-
-void verifyLicense().then((valid) => {
-  const wasLicensed = licensed
-  licensed = valid
-  if (wasLicensed && !valid) message = 'Your license is no longer active. The free matcher and exports still work.'
+} else {
+  captureLicense()
+  licensed = hasOptimisticLicense()
   render()
-})
+  void loadState().then((saved) => {
+    if (saved?.version === 1) state = saved
+  }).catch(() => {
+    message = 'Local saving is unavailable in this browser. You can still match and export this session.'
+  }).finally(() => {
+    busy = false
+    render()
+  })
+
+  void verifyLicense().then((valid) => {
+    const wasLicensed = licensed
+    licensed = valid
+    if (wasLicensed && !valid) message = 'Your license is no longer active. The free matcher and exports still work.'
+    render()
+  })
+}
+
+function setRouteMetadata(): void {
+  document.title = demoMode ? 'Demo — Settlement Match' : 'Settlement Match — match a payout to sales'
+  const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]')
+  if (canonical) canonical.href = `https://payout-bundle-matcher.sociobot.in${demoMode ? '/demo' : '/'}`
+  const description = document.querySelector<HTMLMetaElement>('meta[name="description"]')
+  if (description && demoMode) description.content = 'Try a sample processor payout reconciliation without changing your saved workspace.'
+  if (demoMode) {
+    document.querySelector<HTMLMetaElement>('meta[property="og:title"]')?.setAttribute('content', 'Demo — Settlement Match')
+    document.querySelector<HTMLMetaElement>('meta[property="og:description"]')?.setAttribute('content', 'Review a completed sample payout without changing your saved workspace.')
+    document.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.setAttribute('content', 'https://payout-bundle-matcher.sociobot.in/demo')
+    document.querySelector<HTMLMetaElement>('meta[name="twitter:title"]')?.setAttribute('content', 'Demo — Settlement Match')
+    document.querySelector<HTMLMetaElement>('meta[name="twitter:description"]')?.setAttribute('content', 'Review a completed sample payout without changing your saved workspace.')
+  }
+}
 
 function h(value: unknown): string {
   return String(value ?? '').replace(/[&<>"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[character]!)
@@ -91,6 +144,7 @@ function currentData(): { payout: Payout; sales: Sale[]; result: Reconciliation 
 
 async function persist(): Promise<void> {
   state.updatedAt = new Date().toISOString()
+  if (demoMode) return
   try { await saveState(state) } catch { /* already warned where possible */ }
 }
 
@@ -116,71 +170,87 @@ function render(): void {
 
   app.innerHTML = `
     <header class="site-header">
-      <a class="wordmark" href="#top" aria-label="Settlement Match home"><span class="mark" aria-hidden="true"><i></i><b></b></span>Settlement Match</a>
+      <a class="wordmark" href="/" aria-label="Settlement Match home"><span class="mark" aria-hidden="true"><i></i><b></b></span>Settlement Match</a>
       <nav aria-label="Main navigation">
+        <a href="/demo">Demo</a>
         <a href="#matcher">Matcher</a>
-        <button class="text-button" type="button" data-action="open-license">${licensed ? 'Pro active' : 'Get Pro'}</button>
-        <button class="text-button" type="button" data-action="import-data">Import data</button>
-        <button class="text-button" type="button" data-action="export-data">Export data</button>
-        <input class="sr-only" id="workspace-import" type="file" accept="application/json,.json" aria-label="Import Settlement Match workspace" />
+        <a href="/privacy/">Privacy</a>
+        ${demoMode ? '' : `<button class="text-button" type="button" data-action="open-license">${licensed ? 'Pro active' : 'Pro details'}</button>`}
       </nav>
     </header>
+    ${demoMode ? `<aside class="demo-banner" aria-label="Demo status"><strong>Demo — sample data, nothing is saved</strong><span>Changes stay in this temporary view.</span><div><button type="button" data-action="reset-demo">Reset demo</button><a href="/">Start for real</a></div></aside>` : ''}
     <main id="main">
-      <section class="hero" id="top">
+      ${demoMode ? `<section class="demo-intro" id="top"><p class="eyebrow">Sample payout PO-1042</p><h1 tabindex="-1">Review a sample payout</h1><p>The sample already includes sales, fees, a refund, and one timing shift.</p></section>` : `<section class="hero" id="top">
         <div class="hero-copy">
-          <p class="eyebrow">One payout. Every moving part.</p>
-          <h1>Make the deposit<br><em>make sense.</em></h1>
-          <p class="lede">Match a processor payout to the sales, fees, refunds, and timing shifts behind it. Your CSVs stay in this browser.</p>
+          <p class="eyebrow">Local payout reconciliation</p>
+          <h1>Match a payout to your sales</h1>
+          <p class="lede">For one-store owners and bookkeepers who need to explain a processor payout without sharing customer data.</p>
           <div class="hero-actions">
-            <a class="button primary" href="#matcher">Match a payout <span aria-hidden="true">↓</span></a>
-            <span class="privacy-note"><span aria-hidden="true">●</span> Local-only processing</span>
+            <a class="button primary" href="/demo">Try it with sample data</a>
+            <a class="secondary-link" href="#matcher">Use your CSVs</a>
+            <span class="action-note">The sample opens a completed match.</span>
           </div>
+          <ul class="hero-facts" aria-label="Product facts">
+            <li>Your CSV data stays in this browser.</li>
+            <li>Works offline after your first visit.</li>
+            <li>Free matcher and exports. Pro is $19 once.</li>
+          </ul>
         </div>
         <figure class="hero-art">
-          <img src="/settlement-landscape.webp" width="1152" height="768" alt="A coral coin and a fan of receipts balancing across a dark arch" fetchpriority="high" decoding="async" />
-          <figcaption>Many transactions arrive as one.</figcaption>
+          <img src="/settlement-landscape.webp" width="1152" height="768" alt="A coral coin and blank receipts balance across a dark arch" fetchpriority="high" decoding="async" />
+          <figcaption>One payout can contain several sales.</figcaption>
         </figure>
-      </section>
+      </section>`}
       <section class="workspace" id="matcher" aria-labelledby="workspace-title">
         <div class="workspace-heading">
-          <div><p class="eyebrow">Private workspace</p><h2 id="workspace-title">Reconcile one payout</h2></div>
-          ${renderSteps()}
+          <div><p class="eyebrow">${demoMode ? 'Sample workspace' : 'Private workspace'}</p><h2 id="workspace-title">Reconcile one payout</h2></div>
+          <div class="workspace-heading-tools">${renderSteps()}${demoMode ? '' : `<div class="workspace-actions"><button class="text-button" type="button" data-action="import-data">Import workspace</button><button class="text-button" type="button" data-action="export-data">Export workspace</button><input class="sr-only" id="workspace-import" type="file" accept="application/json,.json" aria-label="Import Settlement Match workspace" /></div>`}</div>
         </div>
         <div id="notice" class="notice-stack" aria-live="polite">
           ${error ? `<div class="notice error"><strong>Check the file or mapping.</strong> ${h(error)}</div>` : ''}
           ${message ? `<div class="notice"><strong>Workspace update.</strong> ${h(message)}</div>` : ''}
-          ${!navigator.onLine ? `<div class="notice offline"><strong>You’re offline.</strong> Matching, saving, and exports still work on this device.</div>` : ''}
+          ${!navigator.onLine ? `<div class="notice offline"><strong>You’re offline.</strong> This page is using its saved app files.</div>` : ''}
         </div>
         ${workspace}
       </section>
-      <section class="method" aria-labelledby="method-title">
-        <p class="eyebrow">A bounded tool, by design</p>
-        <h2 id="method-title">Evidence, not accounting theatre.</h2>
+      ${demoMode ? '' : `<section class="method" aria-labelledby="method-title">
+        <p class="eyebrow">Three steps</p>
+        <h2 id="method-title">How payout matching works</h2>
         <div class="method-grid">
-          <p><span>01</span><strong>Confirm every column</strong>We suggest mappings, but no amount is used until you approve it.</p>
-          <p><span>02</span><strong>See the arithmetic</strong>Gross minus fees and refunds is compared directly with the deposit.</p>
-          <p><span>03</span><strong>Keep custody</strong>No bank login, upload server, analytics script, or automatic posting.</p>
+          <p><span>01</span><strong>Choose two CSV files</strong>Add one processor payout export and one sales or invoice export.</p>
+          <p><span>02</span><strong>Confirm the columns</strong>No mapped amount enters the calculation until you approve the column mapping.</p>
+          <p><span>03</span><strong>Review and sign off</strong>Check the suggested sales, explain any variance, then export the report.</p>
         </div>
       </section>
+      <section class="scope" aria-labelledby="scope-title">
+        <p class="eyebrow">Privacy and limits</p><h2 id="scope-title">What this tool does not do</h2>
+        <p>It does not connect to a bank, upload CSV files, post to a ledger, or certify your accounts.</p>
+        <p>Matching, sign-off, workspace export, and report export remain available without Pro.</p>
+      </section>
+      <section class="pricing" id="pricing" aria-labelledby="pricing-title">
+        <div><p class="eyebrow">Optional one-time license</p><h2 id="pricing-title">Save column mappings with Pro</h2><p>Pro also removes the Settlement Match credit from signed print reports.</p></div>
+        <div class="price-block"><strong>$19 once</strong><p>Checkout registration is pending. Pro is not available to buy yet.</p><button class="button secondary" type="button" data-action="open-license">Review Pro details</button></div>
+      </section>`}
     </main>
-    <footer>
-      <p><strong>Settlement Match</strong><br>A local reconciliation utility—not accounting or tax advice.</p>
-      <div><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><button class="footer-button" data-action="delete-data" type="button">${deleteArmed ? 'Confirm: delete local data' : 'Delete local data'}</button></div>
-      <p class="art-credit">Original AI-generated editorial artwork · No customer data leaves this device.</p>
+    <footer class="site-footer">
+      <p><strong>Settlement Match</strong><br>Explain one processor payout from local CSV files.</p>
+      <div><a href="/demo">Demo</a><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a>${demoMode ? '' : `<button class="footer-button" data-action="delete-data" type="button">${deleteArmed ? 'Confirm: delete local data' : 'Delete local data'}</button>`}</div>
+      <p class="art-credit">Original AI-generated editorial artwork · Built by Param Factory · Version ${BUILD_LABEL}</p>
     </footer>
     <div class="toast" id="update-toast" hidden role="status">A new version is ready. <button type="button" data-action="update-app">Update now</button></div>
-    <dialog id="license-dialog" aria-labelledby="license-title">
+    ${demoMode ? '' : `<dialog id="license-dialog" aria-labelledby="license-title">
       <button class="dialog-close" type="button" data-action="close-license" aria-label="Close license dialog">×</button>
       <p class="eyebrow">One-time license · $19</p>
-      <h2 id="license-title">Reuse your setup with Pro.</h2>
-      <p>The free matcher and every export stay free. Pro saves reusable column maps on this device and removes the tool credit from signed print reports.</p>
-      ${licensed ? `<p class="license-active"><span aria-hidden="true">✓</span> Pro is active on this device.</p>` : `<a class="button primary wide" href="${checkoutUrl()}">Buy Pro securely</a>`}
+      <h2 id="license-title">Reuse your setup with Pro</h2>
+      <p>The free matcher and every export stay free. Pro saves reusable column mappings on this device and removes the tool credit from signed print reports.</p>
+      ${licensed ? `<p class="license-active"><span aria-hidden="true">✓</span> Pro is active on this device.</p>` : `<div class="offer-unavailable" role="status"><strong>Checkout is not available yet.</strong><p>Product registration is pending. No payment can be taken here.</p></div>`}
       <form id="license-form">
         <label for="license-token">Have a license? Paste it here</label>
-        <div class="inline-form"><input id="license-token" name="license" autocomplete="off" required /><button class="button secondary" type="submit">Restore</button></div>
+        <div class="inline-form"><input id="license-token" name="license" autocomplete="off" required aria-describedby="license-help" /><button class="button secondary" type="submit">Restore license</button></div>
+        <p id="license-help" class="fine-print">The token is sent only to the Sociobot billing API for verification.</p>
       </form>
-      <p class="fine-print">Checkout and refunds are handled by Sociobot/Dodo, the merchant of record. <a href="/terms/">Terms apply.</a></p>
-    </dialog>`
+      <p class="fine-print">When sales open, checkout and refunds will be handled by Sociobot/Dodo, the merchant of record. <a href="/privacy/">Privacy</a> and <a href="/terms/">terms</a> apply.</p>
+    </dialog>`}`
   bindEvents()
 }
 
@@ -194,11 +264,11 @@ function renderSteps(): string {
 
 function renderUpload(): string {
   return `<div class="upload-layout">
-    <div class="upload-intro"><h3>Bring two exports</h3><p>Start with the processor’s payout CSV and the sales or invoice CSV that may be inside it. We do not need a bank export.</p><div class="file-tip"><strong>Before you begin</strong><span>Keep the original files unchanged. You will confirm dates and money columns next.</span></div></div>
+    <div class="upload-intro"><h3>Bring two exports</h3><p>Start with the processor payout CSV and the sales or invoice CSV that may be inside it. We do not need a bank export.</p><div class="file-tip"><strong>Before you begin</strong><span>Keep the original files unchanged. You will confirm dates and money columns next.</span></div></div>
     <form id="upload-form" class="upload-form">
-      ${fileInput('payout', '1', 'Processor payout CSV', 'The deposit amount and payout date.', state.payoutFile)}
+      ${fileInput('payout', '1', 'Processor payout CSV', 'The payout amount and payout date.', state.payoutFile)}
       ${fileInput('sales', '2', 'Sales or invoice CSV', 'Order totals, paid dates, and optional fees/refunds.', state.salesFile)}
-      <div class="upload-actions"><button class="button primary" type="submit" ${!state.payoutFile || !state.salesFile ? 'disabled' : ''}>Confirm files <span aria-hidden="true">→</span></button><button class="text-button sample-button" type="button" data-action="download-samples">Download sample CSVs</button></div>
+      <div class="upload-actions"><button class="button primary" type="submit" ${!state.payoutFile || !state.salesFile ? 'disabled' : ''}>Confirm files <span aria-hidden="true">→</span></button><a href="/demo">Try it with sample data</a></div>
     </form>
   </div>`
 }
@@ -268,7 +338,7 @@ function renderMatch(): string {
       <section class="calculation" aria-labelledby="calc-title">
         <div class="section-heading"><div><p class="eyebrow">Bundle calculation</p><h3 id="calc-title">What should have arrived</h3></div><span class="status ${explained ? 'success' : 'warning'}">${explained ? '✓ Explained' : '△ Exception remains'}</span></div>
         <dl class="equation">
-          <div><dt>Selected gross sales <small>${result.selected.length} transactions</small></dt><dd>${money(result.gross)}</dd></div>
+          <div><dt>Selected gross sales <small>${result.selected.length} sales</small></dt><dd>${money(result.gross)}</dd></div>
           <div><dt>Processor fees</dt><dd>− ${money(result.fees)}</dd></div>
           <div><dt>Refunds</dt><dd>− ${money(result.refunds)}</dd></div>
           <div class="expected"><dt>Expected proceeds</dt><dd>${money(result.expected)}</dd></div>
@@ -279,14 +349,14 @@ function renderMatch(): string {
         <p class="print-credit">Prepared locally with Settlement Match · payout-bundle-matcher.sociobot.in</p>
       </section>
       <section class="signoff-panel" aria-labelledby="signoff-title">
-        <p class="eyebrow">Review decision</p><h3 id="signoff-title">${state.signoff ? 'Report signed off' : 'Complete the trail'}</h3>
-        ${state.signoff ? `<div class="signed-stamp"><span>Signed</span><strong>${h(state.signoff.name)}</strong><small>${new Date(state.signoff.at).toLocaleString()} · ${h(state.signoff.reportId)}</small></div><p>${h(state.signoff.note || 'No reviewer note.')}</p><div class="stack-actions"><button class="button primary" type="button" data-action="print-report">Print / save PDF</button><button class="button secondary" type="button" data-action="export-report">Export exception CSV</button><button class="text-button" type="button" data-action="reopen">Reopen review</button></div>` : `<form id="signoff-form"><label for="reviewer-name">Reviewer name<input id="reviewer-name" name="name" required autocomplete="name" /></label><label for="reviewer-note">Exception note <small>${explained ? 'optional' : 'required while variance remains'}</small><textarea id="reviewer-note" name="note" rows="4" ${explained ? '' : 'required'} placeholder="What was checked or needs follow-up?"></textarea></label><label class="check-label"><input type="checkbox" required /><span>I reviewed the selected transactions and arithmetic.</span></label><button class="button primary wide" type="submit">Sign off report</button></form>`}
+        <p class="eyebrow">Review decision</p><h3 id="signoff-title">${state.signoff ? 'Report signed off' : 'Complete the review'}</h3>
+        ${state.signoff ? `<div class="signed-stamp"><span>Signed</span><strong>${h(state.signoff.name)}</strong><small>${new Date(state.signoff.at).toLocaleString()} · ${h(state.signoff.reportId)}</small></div><p>${h(state.signoff.note || 'No reviewer note.')}</p><div class="stack-actions"><button class="button primary" type="button" data-action="print-report">Print / save PDF</button><button class="button secondary" type="button" data-action="export-report">Export exception CSV</button><button class="text-button" type="button" data-action="reopen">Reopen review</button></div>` : `<form id="signoff-form"><label for="reviewer-name">Reviewer name<input id="reviewer-name" name="name" required autocomplete="name" /></label><label for="reviewer-note">Exception note <small>${explained ? 'optional' : 'required while variance remains'}</small><textarea id="reviewer-note" name="note" rows="4" ${explained ? '' : 'required'} placeholder="What was checked or needs follow-up?"></textarea></label><label class="check-label"><input type="checkbox" required /><span>I reviewed the selected sales and arithmetic.</span></label><button class="button primary wide" type="submit">Sign off report</button></form>`}
       </section>
     </div>
     <section class="transactions" aria-labelledby="transactions-title">
-      <div class="section-heading"><div><p class="eyebrow">Bundle contents</p><h3 id="transactions-title">Transactions in the window</h3></div><div><button class="text-button" type="button" data-action="select-suggested">Reset suggestion</button><button class="text-button" type="button" data-action="toggle-all">${result.selected.length === sales.length ? 'Exclude all' : 'Include all'}</button></div></div>
+      <div class="section-heading"><div><p class="eyebrow">Payout contents</p><h3 id="transactions-title">Sales in the window</h3></div><div><button class="text-button" type="button" data-action="select-suggested">Reset suggestion</button><button class="text-button" type="button" data-action="toggle-all">${result.selected.length === sales.length ? 'Exclude all' : 'Include all'}</button></div></div>
       <div class="table-wrap"><table><caption class="sr-only">Sales candidates for payout ${h(payout.id)}</caption><thead><tr><th scope="col">Include</th><th scope="col">Order / invoice</th><th scope="col">Sale date</th><th scope="col">Status</th><th scope="col" class="number">Gross</th><th scope="col" class="number">Fee</th><th scope="col" class="number">Refund</th></tr></thead><tbody>${sales.map((sale) => `<tr class="${state.selectedKeys.includes(sale.key) ? '' : 'excluded'}"><td><input class="row-check" type="checkbox" data-key="${sale.key}" aria-label="Include ${h(sale.id)}" ${state.selectedKeys.includes(sale.key) ? 'checked' : ''} /></td><th scope="row">${h(sale.id)}</th><td>${dateLabel(sale.date)}${sale.date !== payout.date ? '<small class="shift">Timing shift</small>' : ''}</td><td>${h(sale.status)}</td><td class="number">${money(sale.gross)}</td><td class="number">${money(sale.fee)}</td><td class="number">${money(sale.refund)}</td></tr>`).join('')}</tbody></table></div>
-      <p class="table-help">Included rows feed the calculation above. Change any checkbox to test the bundle; your last selection is saved locally.</p>
+      <p class="table-help">Included sales feed the calculation above. Change a checkbox to test the payout; your last selection is saved locally.</p>
     </section>
   </div>`
 }
@@ -406,6 +476,7 @@ function changeCurrency(): void {
 
 async function action(name: string): Promise<void> {
   const dialog = document.querySelector<HTMLDialogElement>('#license-dialog')
+  if (name === 'reset-demo' && demoMode) { state = demoState(); deleteArmed = false; announce('The sample payout was reset.'); render(); return }
   if (name === 'open-license') { dialog?.showModal(); return }
   if (name === 'close-license') { dialog?.close(); return }
   if (name === 'back-upload') { state.stage = 'upload'; await persist(); render(); return }
@@ -415,7 +486,6 @@ async function action(name: string): Promise<void> {
   if (name === 'export-report') { exportReport(); return }
   if (name === 'export-data') { exportData(); return }
   if (name === 'import-data') { document.querySelector<HTMLInputElement>('#workspace-import')?.click(); return }
-  if (name === 'download-samples') { downloadSamples(); return }
   if (name === 'select-suggested') {
     const data = currentData(); if (data) state.selectedKeys = suggestedKeys(data.sales, data.payout, state.timingDays)
     state.signoff = undefined; state.stage = 'match'; await persist(); render(); return
@@ -431,6 +501,7 @@ async function action(name: string): Promise<void> {
     announce('This column map is saved on this device.'); render(); return
   }
   if (name === 'delete-data') {
+    if (demoMode) return
     if (!deleteArmed) { deleteArmed = true; message = 'Press the delete button again to remove imported rows and the signed report.'; render(); return }
     await clearState(); state = emptyState(); deleteArmed = false; announce('All imported and saved reconciliation data was deleted from this device.'); render(); return
   }
@@ -479,11 +550,7 @@ function exportReport(): void {
   rows.push(...result.excluded.map((sale) => [sale.id, sale.date, sale.status, sale.gross.toFixed(2), sale.fee.toFixed(2), sale.refund.toFixed(2), 'Excluded']))
   rows.push(['SUMMARY', data.payout.date, state.signoff?.note ?? '', result.gross.toFixed(2), result.fees.toFixed(2), result.refunds.toFixed(2), `Variance ${result.variance.toFixed(2)}`])
   download(`${data.payout.id.replace(/[^a-z0-9-]/gi, '_')}-exception-report.csv`, rowsToCsv(['Reference', 'Date', 'Status / note', 'Gross', 'Fee', 'Refund', 'Decision'], rows), 'text/csv')
-}
-
-function downloadSamples(): void {
-  download('sample-payout.csv', 'payout_id,payout_date,net_amount,fees,refunds\nPO-1042,2026-08-26,285.50,9.50,25.00\n', 'text/csv')
-  setTimeout(() => download('sample-sales.csv', 'order_id,paid_date,gross_amount,processor_fee,refund_amount,status\nORD-100,2026-08-25,120.00,3.60,0,paid\nORD-101,2026-08-26,200.00,5.90,25.00,partially_refunded\n', 'text/csv'), 250)
+  announce('The exception CSV was exported.'); render()
 }
 
 window.addEventListener('online', render)

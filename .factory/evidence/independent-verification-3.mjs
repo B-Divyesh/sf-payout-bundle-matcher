@@ -20,8 +20,9 @@ try {
     return { text: element?.textContent, outlineWidth: style?.outlineWidth, transform: style?.transform }
   })
   const welcomeAxe = await new AxeBuilder({ page }).analyze()
-  await page.getByRole('button', { name: 'Get Pro' }).click()
-  const checkoutHref = await page.locator('#license-dialog a.button.primary').getAttribute('href')
+  await page.getByRole('button', { name: 'Pro details', exact: true }).click()
+  const checkoutLinks = await page.locator('#license-dialog a[href*="checkout"]').count()
+  const checkoutStatus = await page.locator('#license-dialog .offer-unavailable').innerText()
   await page.getByRole('button', { name: 'Close license dialog' }).click()
 
   // A malformed CSV must not destroy the empty workspace, and a replacement must recover.
@@ -39,7 +40,7 @@ try {
   await page.locator('#signoff-form input[type=checkbox]').check()
   await page.getByRole('button', { name: 'Sign off report' }).click()
   const exceptionNoteRequired = await page.locator('#reviewer-note').evaluate((node) => node.required)
-  const stillReviewing = await page.getByRole('heading', { name: 'Complete the trail' }).isVisible()
+  const stillReviewing = await page.getByRole('heading', { name: 'Complete the review' }).isVisible()
   await page.locator('#reviewer-note').fill('Payout is short by $20; follow up with processor.')
   await page.getByRole('button', { name: 'Sign off report' }).click()
   await page.getByText('Report signed off').waitFor()
@@ -73,9 +74,9 @@ try {
   const ownOrigin = new URL(baseUrl).origin
   const externalRequests = [...new Set(requests.filter((url) => new URL(url).origin !== ownOrigin))]
   const seriousOrCritical = [...welcomeAxe.violations, ...privacyAxe.violations].filter((item) => ['serious', 'critical'].includes(item.impact || ''))
-  const result = { focus, checkoutHref, malformedCsv, variance, exceptionNoteRequired, stillReviewing, csvFormulaSafe, deleteSurvivedReload, reducedMotion, mobileOverflow, welcomeAxe: welcomeAxe.violations.length, privacyAxe: privacyAxe.violations.length, seriousOrCritical: seriousOrCritical.map((item) => item.id), externalRequests, errors }
+  const result = { focus, checkoutLinks, checkoutStatus, malformedCsv, variance, exceptionNoteRequired, stillReviewing, csvFormulaSafe, deleteSurvivedReload, reducedMotion, mobileOverflow, welcomeAxe: welcomeAxe.violations.length, privacyAxe: privacyAxe.violations.length, seriousOrCritical: seriousOrCritical.map((item) => item.id), externalRequests, errors }
   console.log(JSON.stringify(result))
-  if (focus.text !== 'Skip to matching tool' || focus.outlineWidth !== '3px' || focus.transform !== 'none' || checkoutHref !== 'https://api.sociobot.in/api/v1/products/payout-bundle-matcher/checkout' || !malformedCsv.includes('header row and at least one data row') || variance !== '$20.00' || !exceptionNoteRequired || !stillReviewing || !csvFormulaSafe || !deleteSurvivedReload || !['0.01s', '1e-05s'].includes(reducedMotion) || mobileOverflow || seriousOrCritical.length || externalRequests.length || errors.length) process.exitCode = 1
+  if (focus.text !== 'Skip to matching tool' || focus.outlineWidth !== '3px' || focus.transform !== 'none' || checkoutLinks !== 0 || !checkoutStatus.includes('Checkout is not available yet') || !malformedCsv.includes('header row and at least one data row') || variance !== '$20.00' || !exceptionNoteRequired || !stillReviewing || !csvFormulaSafe || !deleteSurvivedReload || !['0.01s', '1e-05s'].includes(reducedMotion) || mobileOverflow || seriousOrCritical.length || externalRequests.length || errors.length) process.exitCode = 1
 } finally {
   await context.close()
   await browser.close()

@@ -1,18 +1,22 @@
 {
   "name": "payout-bundle-matcher",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "test": "vitest run",
+    "preview:factory": "node .factory/preview.mjs",
+    "test": "npm run test:unit && npm run build && playwright test",
+    "test:unit": "vitest run",
+    "test:claims": "npm run build && playwright test .factory/tests/claims.spec.ts",
     "test:browser": "node .factory/evidence/e2e.mjs && node .factory/evidence/pwa-update.mjs",
     "test:watch": "vitest"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "1.58.2",
     "playwright": "1.58.2",
     "typescript": "^5.7.3",
     "vite": "^6.1.0",

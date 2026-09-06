@@ -7,3 +7,4 @@ graphify-out/
 .factory/evidence/*.png
 .factory/evidence/*.json
 .factory/evidence/index.html
+.factory/evidence/test-results/

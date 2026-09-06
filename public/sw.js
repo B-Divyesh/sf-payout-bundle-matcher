@@ -1,7 +1,7 @@
-const VERSION = 'settlement-match-v3'
+const VERSION = 'settlement-match-v5'
 const SHELL = `${VERSION}-shell`
 const RUNTIME = `${VERSION}-runtime`
-const CORE = ['/', '/offline.html', '/manifest.webmanifest', '/settlement-landscape.webp', '/icons/icon.svg', '/icons/icon-192.png', '/icons/icon-512.png']
+const CORE = ['/', '/demo', '/privacy/', '/terms/', '/404.html', '/offline.html', '/legal.css', '/manifest.webmanifest', '/settlement-landscape.webp', '/icons/icon.svg', '/icons/icon-192.png', '/icons/icon-512.png', '/icons/apple-touch-icon.png']
 
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
@@ -33,13 +33,23 @@ self.addEventListener('fetch', (event) => {
 
   if (request.mode === 'navigate') {
     event.respondWith((async () => {
+      if (!self.navigator.onLine) {
+        const cached = await caches.match(request, { ignoreSearch: true })
+        return cached || (await caches.match('/offline.html'))
+      }
       try {
-        const response = await fetch(request)
+        const response = await Promise.race([
+          fetch(request),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Navigation timed out')), 2000))
+        ])
         const cache = await caches.open(RUNTIME)
-        cache.put(request, response.clone())
+        if (response.ok) cache.put(request, response.clone())
         return response
       } catch {
-        return (await caches.match(request)) || (await caches.match('/')) || (await caches.match('/offline.html'))
+        const cached = await caches.match(request, { ignoreSearch: true })
+        if (cached) return cached
+        if (url.pathname === '/') return (await caches.match('/')) || (await caches.match('/offline.html'))
+        return (await caches.match('/offline.html'))
       }
     })())
     return

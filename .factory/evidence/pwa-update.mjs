@@ -12,14 +12,15 @@ const mime = {
 
 const server = createServer((request, response) => {
   const pathname = new URL(request.url || '/', 'http://localhost').pathname
-  const relative = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '')
+  const routeFiles = { '/': 'index.html', '/demo': 'index.html', '/demo/': 'index.html', '/privacy/': 'privacy/index.html', '/terms/': 'terms/index.html' }
+  const relative = routeFiles[pathname] || pathname.replace(/^\/+/, '')
   const filename = normalize(join(dist, relative))
   if (!filename.startsWith(dist) || !statSync(filename, { throwIfNoEntry: false })?.isFile()) {
     response.writeHead(404).end()
     return
   }
   const body = relative === 'sw.js'
-    ? readFileSync(filename, 'utf8').replaceAll('settlement-match-v3', `settlement-match-${workerVersion}`)
+    ? readFileSync(filename, 'utf8').replaceAll('settlement-match-v5', `settlement-match-${workerVersion}`)
     : readFileSync(filename)
   response.writeHead(200, {
     'Content-Type': mime[extname(filename)] || 'application/octet-stream',
