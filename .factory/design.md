@@ -110,3 +110,10 @@ project under the MIT license; the footer discloses generated imagery.
 
 App icons and small balance marks are original hand-authored SVG/CSS geometry,
 also MIT-licensed with the source.
+
+### Derived social and touch assets
+
+`public/social-preview.png` is a 1200 × 630 center crop of the original
+settlement landscape. `public/icons/apple-touch-icon.png` is a 180 px export
+of the hand-authored app icon. Both were derived locally on 2026-09-06 and
+remain under the repository's MIT license; no additional model was used.

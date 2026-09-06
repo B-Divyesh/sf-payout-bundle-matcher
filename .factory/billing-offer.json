@@ -1,0 +1,14 @@
+{
+  "slug": "payout-bundle-matcher",
+  "name": "Settlement Match Pro",
+  "price_minor": 1900,
+  "currency": "USD",
+  "price_type": "one_time_price",
+  "return_url": "https://payout-bundle-matcher.sociobot.in/",
+  "price_evidence": "The $19 one-time offer appears in the live Pro dialog and terms at implementation 6505c57; checkout registration returned 404 on 2026-09-06.",
+  "paid_features": [
+    "Save reusable column mappings on this device",
+    "Remove the Settlement Match credit from signed print reports"
+  ],
+  "license_validation_path": "/api/v1/products/payout-bundle-matcher/verify"
+}

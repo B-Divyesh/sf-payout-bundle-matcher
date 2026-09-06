@@ -1,54 +1,53 @@
 # Settlement Match
 
-Settlement Match explains why one processor payout differs from that day’s orders or invoices. It is for a one-store owner or bookkeeper who has a payout CSV and a sales CSV, but does not want to connect a bank account to another subscription service.
+Settlement Match explains one processor payout from sales, fees, refunds, and timing shifts. It is for a one-store owner or bookkeeper with a payout CSV and a sales or invoice CSV.
 
-The browser-only workflow imports both files, asks the user to confirm every column mapping, suggests transactions from a configurable settlement window, and exposes the arithmetic for gross sales, fees, refunds, timing shifts, and remaining variance. The reviewer can sign off and export an exception CSV or print/PDF report.
+The app runs in the browser at <https://payout-bundle-matcher.sociobot.in>. Try the isolated sample at <https://payout-bundle-matcher.sociobot.in/demo>.
 
-Live: <https://payout-bundle-matcher.sociobot.in>
+## What it does
 
-## Privacy and scope
+The user confirms the CSV column mapping before any mapped amount enters the calculation. A configurable lookback suggests sales, while every selection and calculation remains visible. The reviewer can sign off, export an exception CSV, print or save a PDF, and export or import the workspace.
 
-CSV content is parsed and persisted in IndexedDB on the device. There is no analytics, bank connection, server upload, or automatic accounting entry. Users can export/import the entire workspace and delete it from the footer. License verification is the only optional product API call.
+Real workspace data persists in IndexedDB on the current device. The confirmed delete action removes imported and saved reconciliation data. Each CSV is limited to 10 MiB.
 
-This is an evidence-preparation utility, not accounting or tax advice. It does not post to a ledger, reconcile multiple stores, or certify the result.
+The free matcher, sign-off, accessibility, and exports remain available without Pro. A verified $19 one-time Pro license saves reusable column mappings and removes the print credit. Checkout registration is pending, so Pro is not available to buy yet. Existing license holders can still restore access.
 
-## Run locally
+## Privacy and limits
 
-Requires Node.js 20 or newer.
+CSV matching uses no upload server, bank connection, analytics, advertising tracker, or automatic ledger posting. Optional license verification contacts only the Sociobot billing API. The app is not accounting or tax advice and does not certify a reconciliation.
+
+The sample matcher works offline after the first visit. Use the browser’s site controls if you also want to remove the Pro license token.
+
+See the live [privacy policy](https://payout-bundle-matcher.sociobot.in/privacy/) and [terms](https://payout-bundle-matcher.sociobot.in/terms/).
+
+## Run from a clean checkout
+
+Use Node.js 20 or newer.
 
 ```sh
-npm install
+npm ci
 npm run dev
 ```
 
-Then open the URL Vite prints. The production service worker is intentionally disabled in development.
+Open the URL printed by Vite. The production service worker is disabled in development.
 
-## Test and build
+## Test every claim and build
 
 ```sh
 npm test
 npm run build
-npm run preview
+npm run preview:factory
 npm run test:browser
 ```
 
-The exact deployment build command is `npm run build`. Static output lands in `dist/`, with `dist/index.html` at its root. Deploy that directory as a static site with clean-directory support for `/privacy/` and `/terms/`.
+`npm test` runs unit tests, builds the static product, and runs every browser claim and site check. Individual commands are declared in [`.factory/claims.json`](.factory/claims.json).
 
-## CSV expectations
+The production build lands in `dist/`, with `dist/index.html` at its root. Deploy the directory to the product’s static host using `public/staticwebapp.config.json`.
 
-- Payout CSV: payout ID, payout date, and deposit/net amount; optional aggregate fee, refund, and gross columns.
-- Sales/invoice CSV: order or invoice ID, paid date, and gross; optional per-row fee, refund, and status columns.
-- Dates should use an ISO timestamp/date or a browser-readable export date. Money may include currency marks, commas, or accounting parentheses.
-- Files are limited to 10 MB each to keep local browser processing responsive.
+## Project records
 
-Sample CSVs are available inside the empty workspace.
+- [Demo sandbox](.factory/demo.md)
+- [Design system and artwork provenance](.factory/design.md)
+- [Verification handoff](.factory/handoff.md)
 
-## Paid unlock
-
-The full matcher, sign-off, accessibility, workspace export/import, and report exports are free. A $19 one-time Pro license saves reusable column maps on the device and removes the product credit from print reports. Checkout and verification use only the Sociobot billing API; no product ID or payment-provider SDK is embedded.
-
-## Project notes
-
-The product-specific visual system and generated-image provenance are in [`.factory/design.md`](.factory/design.md). Verification and known gaps are recorded in [`.factory/handoff.md`](.factory/handoff.md).
-
-MIT licensed. See [`LICENSE`](LICENSE).
+MIT licensed. See [LICENSE](LICENSE).
