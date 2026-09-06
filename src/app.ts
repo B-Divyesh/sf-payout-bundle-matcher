@@ -330,7 +330,7 @@ function renderMatch(): string {
         const item = toPayout(state.payoutFile!.rows[index], index, state.mapping!.payout)
         return `<option value="${index}" ${index === state.payoutRow ? 'selected' : ''}>${h(item.id)} · ${money(item.amount)}</option>`
       }).join('')}</select></label>
-      <label for="timing-days"><span>Look back</span><select id="timing-days">${[0, 1, 2, 3, 5, 7, 14].map((days) => `<option value="${days}" ${days === state.timingDays ? 'selected' : ''}>${days === 0 ? 'Same day' : `${days} days`}</option>`).join('')}</select></label>
+      <label for="timing-days"><span>Look back</span><select id="timing-days">${[0, 1, 2, 3, 5, 7, 14].map((days) => `<option value="${days}" ${days === state.timingDays ? 'selected' : ''}>${days === 0 ? 'Same day' : `${days} ${days === 1 ? 'day' : 'days'}`}</option>`).join('')}</select></label>
       <label for="currency"><span>Currency</span><select id="currency">${['USD', 'GBP', 'EUR', 'CAD', 'AUD', 'INR'].map((currency) => `<option ${currency === state.currency ? 'selected' : ''}>${currency}</option>`).join('')}</select></label>
       <button class="text-button" type="button" data-action="edit-map">Edit columns</button>
     </div>

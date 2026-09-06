@@ -25,3 +25,4 @@
 @media (max-width:700px){.hero-actions{grid-template-columns:1fr}.action-note{grid-column:1}.hero-actions .button,.secondary-link{width:100%;justify-content:center}.hero-facts{margin-top:14px}.demo-banner{position:relative;align-items:flex-start;flex-wrap:wrap}.demo-banner span{width:100%}.demo-banner div{margin-left:0;width:100%}.demo-banner button,.demo-banner a{flex:1;justify-content:center}.demo-intro{padding:38px 18px 26px}.workspace-heading-tools{justify-items:start;width:100%}.workspace-actions{flex-wrap:wrap}.pricing{grid-template-columns:1fr;gap:28px}.scope,.pricing{padding:56px 18px}.site-footer div{gap:8px}}
 @media print{.demo-banner,.demo-intro,.scope,.pricing{display:none!important}}
 .wordmark{min-height:44px}
+@media (min-width:901px){.hero-art{margin-left:0}}

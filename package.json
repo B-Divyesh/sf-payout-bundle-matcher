@@ -11,7 +11,7 @@
     "test": "npm run test:unit && npm run build && playwright test",
     "test:unit": "vitest run",
     "test:claims": "npm run build && playwright test .factory/tests/claims.spec.ts",
-    "test:browser": "node .factory/evidence/e2e.mjs && node .factory/evidence/pwa-update.mjs",
+    "test:browser": "npm run build && node .factory/run-browser-tests.mjs",
     "test:watch": "vitest"
   },
   "devDependencies": {
